@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { DeveloperSettings } from "@/components/settings/DeveloperSettings";
 import { AboutSettings } from "@/components/AboutSettings";
 import { AdminEntry } from "@/components/AdminEntry";
 import { CallSettings } from "@/components/CallSettings";
@@ -16,6 +17,8 @@ import type { SettingsCategory } from "@/lib/settingsCategory";
 /** 各类二级页面的内容，按 spec「设置：二级」。记忆和统计自己带页首末端的「清空」「分享」，整页由它们画。 */
 const PANELS: Record<Exclude<SettingsCategory, "memories" | "stats">, ReactNode> = {
   profile: <ProducerProfileSettings />,
+  "character-sheet": <DeveloperSettings mode="sheet" />,
+  developer: <DeveloperSettings mode="play" />,
   call: <CallSettings />,
   "own-keys": <OwnKeysSettings />,
   "sign-in": (
