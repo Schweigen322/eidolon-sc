@@ -5,6 +5,7 @@ services:
     volumes:
       - eidolon-data:/data
       - ./characters:/characters:ro
+      - ./characters/sheets:/characters/sheets
       - ./corpus:/corpus:ro
       - ./deploy:/deploy:ro # 活动名对照表 event-names.toml（同步时读取）
     restart: unless-stopped

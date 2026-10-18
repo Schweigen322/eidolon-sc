@@ -12,7 +12,7 @@ import { sameDraft, type Draft } from "@/lib/producerProfile";
 import { PROVIDER_LABELS, type Provider } from "@/lib/signIn";
 
 /** The first level's groups, top to bottom, with a separator between each two. */
-export const SETTINGS_GROUPS = [["profile", "memories", "stats"], ["call", "own-keys"], ["sign-in"], ["about"]] as const;
+export const SETTINGS_GROUPS = [["profile", "character-sheet", "memories", "stats"], ["call", "own-keys", "developer"], ["sign-in"], ["about"]] as const;
 
 export const SETTINGS_CATEGORIES = SETTINGS_GROUPS.flat();
 
