@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 
 import { SettingsRow } from "@/components/settings/SettingsRow";
 import { SettingsValuesProvider, useSettingsValues } from "@/components/settings/SettingsValues";
@@ -21,6 +21,8 @@ const ICONS = {
   "own-keys": OwnKeysIcon,
   "sign-in": SignInIcon,
   about: AboutIcon,
+  "character-sheet": MemoriesIcon,
+  developer: OwnKeysIcon,
 };
 
 /**
@@ -41,6 +43,12 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
 
 function SettingsLevels({ children }: { children: ReactNode }) {
   const { summaries } = useSettingsValues();
+  const [developer, setDeveloper] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/developer", { signal: controller.signal }).then((r) => setDeveloper(r.ok), () => {});
+    return () => controller.abort();
+  }, []);
   const pathname = usePathname();
   const named = settingsCategory(pathname);
   const isFirstLevel = named === null;
@@ -63,7 +71,7 @@ function SettingsLevels({ children }: { children: ReactNode }) {
             <Fragment key={group[0]}>
               {i > 0 && <Separator className="my-1" />}
               <ul>
-                {group.map((category) => (
+                {group.filter((category) => developer || (category !== "developer" && category !== "character-sheet")).map((category) => (
                   <li key={category}>
                     <SettingsRow
                       href={settingsHref(category)}

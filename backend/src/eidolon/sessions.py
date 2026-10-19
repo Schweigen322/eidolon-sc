@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 SESSION_COOKIE = "eidolon_session"
 
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
-_LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "192.168.3.4", "192.168.3.2"}
 
 
 def set_session_cookie(response: Response, token: str, settings: Settings) -> None:
@@ -34,13 +34,14 @@ def set_session_cookie(response: Response, token: str, settings: Settings) -> No
         path="/",
         httponly=True,
         samesite="lax",
-        secure=settings.domain is not None,
+        secure=settings.domain is not None or settings.dev_origin is not None,
     )
 
 
 def clear_session_cookie(response: Response, settings: Settings) -> None:
     response.delete_cookie(
-        SESSION_COOKIE, path="/", httponly=True, samesite="lax", secure=settings.domain is not None
+        SESSION_COOKIE, path="/", httponly=True, samesite="lax",
+        secure=settings.domain is not None or settings.dev_origin is not None,
     )
 
 
@@ -51,6 +52,8 @@ def origin_allowed(origin: str | None, signed_in: bool, settings: Settings) -> b
     is the site."""
     if origin is None:
         return not signed_in
+    if settings.dev_origin is not None and origin == settings.dev_origin:
+        return True
     if settings.domain is not None:
         return origin == settings.public_origin
     parts = urlsplit(origin)

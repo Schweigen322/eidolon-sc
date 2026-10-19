@@ -167,6 +167,26 @@ async def test_a_public_deployment_accepts_only_its_own_origin_and_secure_cookie
     assert "Secure" in signed_out.headers["set-cookie"]
 
 
+async def test_a_private_https_dev_origin_is_trusted_and_sets_secure_cookies(
+    make_client: ClientFactory, settings: Settings
+):
+    private = replace(settings, dev_origin="https://schweigen.tailbd104e.ts.net")
+    client = make_client(FakeLLM(), settings=private)
+
+    own = await client.post(
+        "/api/auth/dev-login", json={"name": "producer"},
+        headers={"Origin": "https://schweigen.tailbd104e.ts.net"},
+    )
+    foreign = await client.post(
+        "/api/auth/dev-login", json={"name": "producer"},
+        headers={"Origin": "https://other.example.com"},
+    )
+
+    assert own.status_code == 204
+    assert foreign.status_code == 403
+    assert "Secure" in own.headers["set-cookie"]
+
+
 def test_dev_login_and_a_public_deployment_exclude_each_other(
     monkeypatch: pytest.MonkeyPatch, settings: Settings
 ):

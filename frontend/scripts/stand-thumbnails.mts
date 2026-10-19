@@ -54,12 +54,25 @@ async function main(): Promise<number> {
 
   let browser: Browser;
   try {
-    browser = await chromium.launch({
+    const launchOptions = {
       // 用 SwiftShader 画 WebGL，没有显卡的服务器上也一样；新版 Chromium 要明确允许。
       args: ["--enable-unsafe-swiftshader", "--use-angle=swiftshader"],
-    });
+    };
+    try {
+      browser = await chromium.launch(launchOptions);
+    } catch (bundledError) {
+      // Windows 用户可能无法下载 Playwright 的浏览器包；回退到已安装的 Google Chrome。
+      try {
+        browser = await chromium.launch({ ...launchOptions, channel: "chrome" });
+        console.warn("Playwright Chromium 不可用，改用电脑上已安装的 Google Chrome");
+      } catch (chromeError) {
+        throw new Error(
+          `Playwright Chromium: ${messageOf(bundledError)}\nGoogle Chrome: ${messageOf(chromeError)}`,
+        );
+      }
+    }
   } catch (error) {
-    console.error(`打不开 Playwright 的 Chromium（先运行 npx playwright install --with-deps chromium）：${messageOf(error)}`);
+    console.error(`打不开浏览器。请安装 Playwright Chromium，或安装 Google Chrome：${messageOf(error)}`);
     return 3;
   }
   const server = await serve(path.join(build, "source"));

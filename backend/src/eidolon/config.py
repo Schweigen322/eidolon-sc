@@ -380,6 +380,8 @@ class Settings:
     one, and the admin console may override it."""
     domain: str | None = None
     """The public deployment's domain (behind Caddy); None in development."""
+    dev_origin: str | None = None
+    """One exact HTTPS origin trusted by a private development deployment."""
     dev_login: bool = False
     """Lets anyone sign in as any user by name, for development and tests only."""
     github: "OAuthSettings | None" = None
@@ -412,6 +414,23 @@ class Settings:
                 "EIDOLON_DEV_LOGIN=1 让任何人都能不经登录冒充任何用户，只能在开发环境打开；"
                 "配置了 EIDOLON_DOMAIN 的公开部署不会启动，请去掉 EIDOLON_DEV_LOGIN"
             )
+        if self.dev_origin is not None:
+            from urllib.parse import urlsplit
+
+            parts = urlsplit(self.dev_origin)
+            if (
+                not self.dev_login
+                or parts.scheme != "https"
+                or not parts.hostname
+                or parts.path
+                or parts.query
+                or parts.fragment
+                or parts.username
+                or parts.password
+            ):
+                raise RuntimeError(
+                    "EIDOLON_DEV_ORIGIN 只能在 EIDOLON_DEV_LOGIN=1 时填写为完整的 HTTPS 网站源"
+                )
 
     @property
     def chat_model(self) -> ChatModelSettings:
@@ -468,6 +487,7 @@ class Settings:
             affinity_and_gifts=_switch("EIDOLON_AFFINITY_AND_GIFTS", default=True),
             proxy=proxy_from_env(),
             domain=os.environ.get("EIDOLON_DOMAIN", "").strip() or None,
+            dev_origin=os.environ.get("EIDOLON_DEV_ORIGIN", "").strip().rstrip("/") or None,
             dev_login=os.environ.get("EIDOLON_DEV_LOGIN", "").strip() == "1",
             github=OAuthSettings.from_env("GITHUB"),
             google=OAuthSettings.from_env("GOOGLE"),

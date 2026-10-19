@@ -500,6 +500,8 @@ export const zh = {
     loading: "正在读取…",
     /** 设置一级的七类，也是各自二级页首的名字。「登录与数据」不叫「账号」：GLOSSARY 把它列为避免的说法。 */
     categories: {
+      "character-sheet": "角色人设",
+      developer: "开发者工具",
       profile: "档案",
       memories: "记忆",
       stats: "统计",

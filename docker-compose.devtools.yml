@@ -1,0 +1,14 @@
+# Use together with docker-compose.yml so both services share the existing named volume.
+services:
+  devtools:
+    image: python:3.11-slim
+    command: ["python", "/devtools/server.py"]
+    ports:
+      - "127.0.0.1:8766:8766"
+    volumes:
+      - eidolon-data:/data
+      - ./characters:/characters
+      - ./devtools:/devtools:ro
+    environment:
+      EIDOLON_DATABASE_PATH: /data/eidolon.db
+    restart: "no"

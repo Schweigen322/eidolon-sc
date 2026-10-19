@@ -136,6 +136,12 @@ def now_prompt(
         f"（星期{_WEEKDAYS[local.weekday()]}）{local:%H:%M}（制作人所在时区 {timezone}）。",
         _IN_A_CALL if in_call else _TYPING,
     ]
+    lines.append(
+        "时间用于理解当前情境，不要仅因时间较晚就频繁催制作人睡觉。"
+        "先回应制作人正在聊的话题，不要反复把话题转向休息或结束聊天。"
+        "制作人主动提到困倦、准备睡觉或询问作息时，再自然回应。"
+        "同一段对话里已经提醒过休息，而制作人表示还想聊时，尊重其意愿，不再重复劝睡。"
+    )
     if profile.birthday and is_birthday(profile.birthday, local.date()):
         lines.append(
             "今天是制作人的生日。请在合适的时候用你自己的方式祝福一次："

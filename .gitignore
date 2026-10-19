@@ -31,3 +31,28 @@ deploy/event-names.toml
 # 照片 tag 校对用的脸部对照图和缩略图拼版（.scratch/photos 票 13），是原作立绘，不进仓库（ADR-0003）
 /.scratch/_faces/
 /.scratch/photos/prototype/tags/contact_sheet.png
+
+# 本地缓存、数据库和备份
+**/.venv/
+**/node_modules/
+**/.next/
+**/__pycache__/
+*.bak
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# 本地生成的衣装素材
+/backend/source/
+/backend/outfits/
+/backend/thumbnails/
+/backend/webroot/
+/frontend/source/
+/frontend/outfits/
+/frontend/thumbnails/
+/frontend/webroot/
+
+# 已应用的安装补丁
+/eidolon-tailnet-origin.patch
