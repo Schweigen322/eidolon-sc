@@ -105,6 +105,7 @@ export type LastMessage =
 /** A character's newest conversation with the user and the last thing in it, for the
  * conversation list. */
 export type LatestConversation = {
+  unread_proactive?: number;
   character_id: string;
   conversation_id: string;
   created_at: string;
@@ -221,6 +222,9 @@ export type CallEvent =
   | SegmentPlaying
   | SegmentEmotion
   | Speaking
+  /** She corrected the user's Japanese and pauses there (「日语练习」), the rest of reply `reply`
+   * held until the user goes on. Its first `after` segments are her correction. */
+  | { type: "practice-pause"; reply: number; after: number }
   | {
       type: "ended";
       reason: BackendEndReason;
@@ -664,4 +668,27 @@ export async function* sendTurn(conversationId: string, text: string, userId: st
       if (data) yield JSON.parse(data) as TurnEvent;
     }
   }
+}
+
+
+export type ProactiveSettings = {
+  enabled: boolean;
+  characters: string[];
+  interval_hours: number;
+  daily_limit: number;
+  quiet_start: string;
+  quiet_end: string;
+  timezone: string;
+};
+
+export async function getProactiveSettings(): Promise<ProactiveSettings> {
+  return json(await api("/api/proactive"));
+}
+
+export async function saveProactiveSettings(value: ProactiveSettings): Promise<ProactiveSettings> {
+  return json(await api("/api/proactive", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(value),
+  }));
 }

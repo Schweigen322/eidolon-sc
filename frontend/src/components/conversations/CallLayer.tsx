@@ -22,6 +22,7 @@ import { photoImageUrl, type Character, type Outfit, type Photo, type Segment } 
 import { endCard, type CallEnd } from "@/lib/callEnd";
 import { clock, showTime } from "@/lib/callTime";
 import { giftsHref } from "@/lib/gifts";
+import type { PageLine } from "@/lib/linePacing";
 import { photoFailureNote } from "@/lib/photoFailure";
 import type { OwnService } from "@/lib/localOwnKeys";
 import { settingsHref } from "@/lib/settingsCategory";
@@ -35,8 +36,11 @@ import {
 import type { StandDirection } from "@/lib/standAnimations";
 import { cn } from "@/lib/utils";
 import {
+  BackIcon,
   CollapseIcon,
+  ForwardIcon,
   GiftIcon,
+  HideIcon,
   HangUpIcon,
   MicIcon,
   MicOffIcon,
@@ -44,6 +48,7 @@ import {
   PhoneIcon,
   PhotoFailedIcon,
   PhotoIcon,
+  ShowIcon,
   TextOnlyIcon,
 } from "@/theme/icons";
 import { Ja } from "@/theme/Ja";
@@ -67,6 +72,12 @@ type Props = {
   isFullScreen: boolean;
   isReducedMotion: boolean;
   micMuted: boolean;
+  /** 日语练习：她纠正完停在这里，麦克风已关；重新打开麦克风她就接着说。 */
+  practicing: boolean;
+  /** 这通电话开着日语练习：除了她的纠正，字幕默认藏起来练听力（只看文字时不藏）。 */
+  practiceCall: boolean;
+  /** 这通电话里台词卡说过的，她的一条回复一页，给台词卡往回翻。 */
+  pages: PageLine[][];
   /** 麦克风出了状况时要说的话。 */
   micNotice: MicNotice | null;
   textOnly: boolean;
@@ -144,6 +155,9 @@ export function LiveCallLayer({
       isFullScreen={isFullScreen}
       isReducedMotion={isReducedMotion}
       micMuted={snapshot.micMuted}
+      practicing={snapshot.practicing}
+      practiceCall={snapshot.practiceCall}
+      pages={snapshot.pages}
       micNotice={snapshot.micNotice}
       textOnly={snapshot.textOnly}
       line={snapshot.line}
@@ -183,6 +197,10 @@ export function CallLayer(props: Props) {
   const { character, call, isCollapsed, isFullScreen, isReducedMotion, layerRef } = props;
   const ended = call.phase === "ended";
   const hasStand = Boolean(character.stand);
+  const [view, setView] = useState<CardView>(() => freshView(call.dial));
+  // 每通电话从头来：字幕藏着、没有点开过的句子、看的是最新。
+  const shownView = view.dial === call.dial ? view : freshView(call.dial);
+  const hiding = props.practiceCall && !props.textOnly;
 
   // Esc 收起（结束页上是回到对话）；按键时取最新的回调。
   const onEscape = useRef(() => {});
@@ -249,7 +267,19 @@ export function CallLayer(props: Props) {
             </>
           )}
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {!ended && hiding && (
+            <Button
+              variant="call-glass"
+              size={isFullScreen ? "call" : "call-sm"}
+              aria-pressed={shownView.subtitles}
+              aria-label={isFullScreen ? t.subtitles : undefined}
+              onClick={() => setView({ ...shownView, subtitles: !shownView.subtitles })}
+            >
+              {shownView.subtitles ? <ShowIcon aria-hidden /> : <HideIcon aria-hidden />}
+              {!isFullScreen && t.subtitles}
+            </Button>
+          )}
           {!ended && (
             <Button
               variant="call-glass"
@@ -285,13 +315,15 @@ export function CallLayer(props: Props) {
         ) : (
           <>
             <p role="status" className="text-center text-sm text-white/80">
-              {props.micNotice && t.micNotices[props.micNotice]}
+              {props.practicing ? t.practicePaused : props.micNotice && t.micNotices[props.micNotice]}
             </p>
             {/* 台词卡在接通前不出现 */}
             {call.phase === "connected" && props.photo && (
               <CallPhoto key={props.photo.id} photo={props.photo} isFullScreen={isFullScreen} />
             )}
-            {call.phase === "connected" && <LineCard {...props} />}
+            {call.phase === "connected" && (
+              <LineCard {...props} view={shownView} hiding={hiding} onView={setView} />
+            )}
           </>
         )}
       </div>
@@ -426,35 +458,124 @@ function Ripple({ isOn, children }: { isOn: boolean; children: ReactNode }) {
   );
 }
 
+/** 台词卡怎么看：在看哪一页（null 是跟着她说到的最新一句）、字幕开没开、点开过哪几句；每通电话从头来。 */
+type CardView = { dial: number; page: number | null; subtitles: boolean; revealed: ReadonlySet<string> };
+
+function freshView(dial: number): CardView {
+  return { dial, page: null, subtitles: false, revealed: new Set() };
+}
+
+type LineCardProps = Props & { view: CardView; hiding: boolean; onView: (view: CardView) => void };
+
 /**
  * 台词卡：她当前这句的日语原文在上、字幕在下；「只看文字」开着时上一句以 45% 不透明度留在上面。
  * 她还没开口时是一句提示。用户正在说、还没定稿的话放在最下面。
+ * 日语练习时除了她的纠正，句子默认糊住练听力，点一下显示那一句，右上角「字幕」一下全显示。
+ * 底下的 ‹ › 一段一段往回翻她这通电话里说过的话（一条回复一页，整条都摆出来，方便截图）；
+ * 翻着的时候新的句子不会把页面拉走，「回到最新」才回来。
  */
-function LineCard({ line, previousLine, hearing, textOnly }: Props) {
+function LineCard({ line, previousLine, hearing, textOnly, pages, view, hiding, onView }: LineCardProps) {
+  const page = view.page === null || pages.length === 0 ? null : Math.min(view.page, pages.length - 1);
+  const current = pages.at(-1)?.at(-1);
+  const isHidden = (l: PageLine) => hiding && !view.subtitles && !l.correction && !view.revealed.has(l.key);
+  const reveal = (l: PageLine) => onView({ ...view, revealed: new Set(view.revealed).add(l.key) });
+  const turnTo = (to: number | null) => onView({ ...view, page: to });
   return (
     <div className="w-full max-w-[34em] rounded-3xl bg-white/12 px-5 py-4 text-center text-balance backdrop-blur-md">
-      <div aria-live="polite">
-        {line ? (
-          <>
-            {textOnly && previousLine && (
-              <div className="mb-3 opacity-45">
-                <p className="text-body">
-                  <Ja>{previousLine.ja}</Ja>
-                </p>
-                {previousLine.zh && <p className="text-subtitle text-white/80">{previousLine.zh}</p>}
-              </div>
-            )}
-            <p className="text-call-line leading-relaxed">
-              <Ja>{line.ja}</Ja>
-            </p>
-            {line.zh && <p className="mt-1 text-sm text-white/80">{line.zh}</p>}
-          </>
-        ) : (
-          <p className="text-sm text-white/80">{textOnly ? t.repliesInText : t.speakFreely}</p>
-        )}
-      </div>
-      {hearing && <p className="mt-3 text-sm text-white/80">{t.hearing(hearing)}</p>}
+      {page !== null ? (
+        <div className="flex flex-col gap-3">
+          {pages[page].map((l) => (
+            <ShownLine key={l.key} line={l} hidden={isHidden(l)} onReveal={() => reveal(l)} size="page" />
+          ))}
+        </div>
+      ) : (
+        <div aria-live="polite">
+          {line ? (
+            <>
+              {textOnly && previousLine && (
+                <div className="mb-3 opacity-45">
+                  <p className="text-body">
+                    <Ja>{previousLine.ja}</Ja>
+                  </p>
+                  {previousLine.zh && <p className="text-subtitle text-white/80">{previousLine.zh}</p>}
+                </div>
+              )}
+              {current && (
+                <ShownLine line={current} hidden={isHidden(current)} onReveal={() => reveal(current)} size="live" />
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-white/80">{textOnly ? t.repliesInText : t.speakFreely}</p>
+          )}
+        </div>
+      )}
+      {page === null && hearing && <p className="mt-3 text-sm text-white/80">{t.hearing(hearing)}</p>}
+      {pages.length > 0 && (
+        <div className="mt-3 flex items-center justify-center gap-2 text-meta text-white/60">
+          <Button
+            variant="call-round"
+            size="icon-lg"
+            aria-label={t.pagePrevious}
+            disabled={page === 0}
+            onClick={() => turnTo(page === null ? pages.length - 1 : page - 1)}
+          >
+            <BackIcon aria-hidden />
+          </Button>
+          {page !== null && <span className="tabular-nums">{t.page(page + 1, pages.length)}</span>}
+          <Button
+            variant="call-round"
+            size="icon-lg"
+            aria-label={t.pageNext}
+            disabled={page === null}
+            onClick={() => turnTo(page === null || page === pages.length - 1 ? null : page + 1)}
+          >
+            <ForwardIcon aria-hidden />
+          </Button>
+          {page !== null && (
+            <Button variant="call-glass" size="call-sm" onClick={() => turnTo(null)}>
+              {t.backToLatest}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/** 台词卡上的一句：日语原文在上、中文在下。藏着时糊住，点一下显示。 */
+function ShownLine({
+  line,
+  hidden,
+  onReveal,
+  size,
+}: {
+  line: PageLine;
+  hidden: boolean;
+  onReveal: () => void;
+  size: "live" | "page";
+}) {
+  // 用 span 排成块：藏着时整句放在按钮里，按钮里不能有 <p>。
+  const text = (
+    <>
+      <span className={cn("block", size === "live" ? "text-call-line leading-relaxed" : "text-body")}>
+        <Ja>{line.text.ja}</Ja>
+      </span>
+      {line.text.zh && <span className="mt-1 block text-sm text-white/80">{line.text.zh}</span>}
+    </>
+  );
+  if (!hidden) return <div>{text}</div>;
+  return (
+    <button
+      type="button"
+      aria-label={t.showLine}
+      title={t.showLine}
+      onClick={onReveal}
+      className="block w-full rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-white/60"
+    >
+      <span aria-hidden className="pointer-events-none block blur-md select-none">
+        {text}
+      </span>
+    </button>
   );
 }
 

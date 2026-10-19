@@ -12,6 +12,7 @@ from typing import Any
 import pytest
 
 from eidolon.judge import JudgeError, JudgeReply, JudgeThresholds
+from eidolon.relationship import RELATIONSHIP_GUIDANCE
 from eidolon.judge_eval import (
     JudgeEvalError,
     evaluate,
@@ -146,6 +147,7 @@ async def test_a_run_is_asked_as_a_conversation_asks_and_summed_up(tmp_path: Pat
     # Each turn and segment is asked with the state a conversation and a call give; each
     # turn twice, the second time along with affinity's questions.
     assert model.states[2] == {
+        "关系沟通说明": RELATIONSHIP_GUIDANCE,
         "角色": "櫻木真乃",
         "上文": ["制作人：ただいま", "櫻木真乃：おかえりなさい！"],
         "制作人最新的一句话": "うちの猫が風邪をひいてさ",

@@ -346,6 +346,7 @@ class KeptCall:
 
 class Store:
     def __init__(self, path: Path) -> None:
+        self.path = path
         self._db = connect(path)
         self._db.row_factory = sqlite3.Row
         self._lock = threading.Lock()
@@ -361,6 +362,7 @@ class Store:
             self._db.execute("UPDATE users SET name = id")
         self._add_missing_columns("users", ("consented_at", "banned_at", "ban_note"), "TEXT")
         self._add_missing_columns("producer_profiles", ("birthday_month", "birthday_day"), "INTEGER")
+        self._add_missing_columns("producer_profiles", ("context",), "TEXT")
         self._add_missing_columns("messages", ("affinity",), "TEXT")
         self._add_missing_columns("messages", ("hurt",), "REAL")
         self._add_missing_columns("messages", ("out_of_line",), "INTEGER")
@@ -678,6 +680,35 @@ class Store:
                     birthday and birthday.day,
                     _now(),
                 ),
+            )
+
+    def producer_context(self, user_id: str, character_id: str) -> str:
+        """Explicitly imported user context, independent of retrieved memories.
+
+        Shared notes reach every character; character guidance reaches only its named
+        character. Normal profile edits preserve both. Nothing is shared across users.
+        """
+        with self._lock:
+            row = self._db.execute(
+                "SELECT context FROM producer_profiles WHERE user_id = ?", (user_id,)
+            ).fetchone()
+        if not row or not row["context"]:
+            return ""
+        context = json.loads(row["context"])
+        parts = [context["shared"], context["characters"].get(character_id, "")]
+        return "\n\n".join(part for part in parts if part)
+
+    def save_producer_context(
+        self, user_id: str, shared: str, characters: dict[str, str]
+    ) -> None:
+        """Replace explicitly imported context without overwriting profile fields."""
+        context = json.dumps({"shared": shared, "characters": characters}, ensure_ascii=False)
+        with self._lock, self._db:
+            self._db.execute(
+                "INSERT INTO producer_profiles (user_id, updated_at, context) VALUES (?, ?, ?)"
+                " ON CONFLICT (user_id) DO UPDATE SET context = excluded.context,"
+                " updated_at = excluded.updated_at",
+                (user_id, _now(), context),
             )
 
     def create_conversation(self, user_id: str, character_id: str) -> Conversation:

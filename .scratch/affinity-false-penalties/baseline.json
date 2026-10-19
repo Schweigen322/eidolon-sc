@@ -1,0 +1,347 @@
+{
+  "summary": {
+    "model": "typesafe/jev-1.13",
+    "thresholds": {
+      "needs_retrieval": 0.5,
+      "recall": 0.5,
+      "about_producer": 0.5,
+      "emotion": 0.5,
+      "out_of_line": 0.7,
+      "manipulation": 0.4,
+      "photo": 0.5
+    },
+    "retrieval": {
+      "all": {
+        "cases": 0,
+        "failed": 0,
+        "accuracy": null,
+        "confusion": {
+          "nothing": {},
+          "memories": {},
+          "references": {},
+          "recall": {}
+        },
+        "probabilities": {
+          "needs_retrieval": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "recall": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "about_producer": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          }
+        },
+        "input_tokens": {
+          "n": 0
+        },
+        "merged": {
+          "cases": 0,
+          "changed": 0,
+          "shift": {
+            "needs_retrieval": null,
+            "recall": null,
+            "about_producer": null
+          }
+        }
+      },
+      "short": {
+        "cases": 0,
+        "failed": 0,
+        "accuracy": null,
+        "confusion": {
+          "nothing": {},
+          "memories": {},
+          "references": {},
+          "recall": {}
+        },
+        "probabilities": {
+          "needs_retrieval": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "recall": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "about_producer": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          }
+        },
+        "input_tokens": {
+          "n": 0
+        },
+        "merged": {
+          "cases": 0,
+          "changed": 0,
+          "shift": {
+            "needs_retrieval": null,
+            "recall": null,
+            "about_producer": null
+          }
+        }
+      },
+      "long": {
+        "cases": 0,
+        "failed": 0,
+        "accuracy": null,
+        "confusion": {
+          "nothing": {},
+          "memories": {},
+          "references": {},
+          "recall": {}
+        },
+        "probabilities": {
+          "needs_retrieval": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "recall": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "about_producer": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          }
+        },
+        "input_tokens": {
+          "n": 0
+        },
+        "merged": {
+          "cases": 0,
+          "changed": 0,
+          "shift": {
+            "needs_retrieval": null,
+            "recall": null,
+            "about_producer": null
+          }
+        }
+      }
+    },
+    "emotion": {
+      "cases": 0,
+      "failed": 0,
+      "emotion_accuracy": null,
+      "nod_accuracy": null,
+      "likeliest_emotion": {
+        "right": {
+          "n": 0
+        },
+        "wrong": {
+          "n": 0
+        }
+      },
+      "likeliest_nod": {
+        "right": {
+          "n": 0
+        },
+        "wrong": {
+          "n": 0
+        }
+      },
+      "input_tokens": {
+        "n": 0
+      }
+    },
+    "affinity": {
+      "cases": 1,
+      "failed": 0,
+      "level_accuracy": 0.0,
+      "levels": {
+        "0": {},
+        "1": {},
+        "2": {
+          "1": 1
+        },
+        "3": {},
+        "4": {}
+      },
+      "step_accuracy": 0.0,
+      "out_of_line": {
+        "accuracy": 1.0,
+        "yes": {
+          "n": 0
+        },
+        "no": {
+          "n": 1,
+          "min": 0.04,
+          "median": 0.04,
+          "max": 0.04
+        }
+      },
+      "manipulation": {
+        "accuracy": 1.0,
+        "yes": {
+          "n": 0
+        },
+        "no": {
+          "n": 1,
+          "min": 0.02,
+          "median": 0.02,
+          "max": 0.02
+        }
+      },
+      "alone": {
+        "cases": 1,
+        "level": 1.0,
+        "step": 1.0
+      },
+      "reversed": {
+        "cases": 1,
+        "level": 1.0,
+        "step": 1.0
+      },
+      "languages": {
+        "groups": 0,
+        "agreeing": 0
+      },
+      "injected": {
+        "cases": 0,
+        "caught": 0,
+        "raised": 0
+      },
+      "input_tokens": {
+        "n": 1,
+        "min": 2539,
+        "median": 2539,
+        "max": 2539
+      }
+    },
+    "photo": {
+      "cases": 0,
+      "failed": 0,
+      "accuracy": null,
+      "missed": [],
+      "false": [],
+      "yes": {
+        "n": 0
+      },
+      "no": {
+        "n": 0
+      },
+      "alone": {
+        "cases": 0,
+        "accuracy": null,
+        "missed": [],
+        "false": [],
+        "yes": {
+          "n": 0
+        },
+        "no": {
+          "n": 0
+        }
+      },
+      "input_tokens": {
+        "n": 0
+      }
+    },
+    "mean_seconds": 0.8541546999913407
+  },
+  "retrieval": [],
+  "emotion": [],
+  "affinity": [
+    {
+      "id": "haruki-replace-broken-toy",
+      "group": null,
+      "variant": null,
+      "expected": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.04,
+            "1": 0.58,
+            "2": 0.37,
+            "3": 0.0,
+            "4": 0.01
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.03,
+            "1": 0.59,
+            "2": 0.36,
+            "3": 0.01,
+            "4": 0.01
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.01,
+            "1": 0.73,
+            "2": 0.25,
+            "3": 0.0,
+            "4": 0.01
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 2539,
+      "seconds": 0.8541546999913407,
+      "error": null
+    }
+  ],
+  "photo": []
+}

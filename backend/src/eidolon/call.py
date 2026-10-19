@@ -142,7 +142,7 @@ from eidolon.own_keys import (
 )
 from eidolon.proxy import ProxiedWebsocket, ProxyRoutes, masked, open_client
 from eidolon.readings import Reading, pronunciation_dictionary
-from eidolon.reply_format import SegmentComplete, SegmentDelta, SpeechDelta
+from eidolon.reply_format import PracticePause, SegmentComplete, SegmentDelta, SpeechDelta
 from eidolon.store import Conversation, NotFound, Store
 from eidolon.turn_outcome import TurnOutcome
 from eidolon.turn_taking import (
@@ -188,6 +188,7 @@ class Call:
     own_llm: bool = False
     voiced_by: FishAudioModel = DEFAULT_FISH_AUDIO_MODEL
     own_image: ImageSettings | None = None
+    practice: bool = False  # Japanese practice (「日语练习」)
 
 
 _taking_turn: ContextVar["CallTurns | None"] = ContextVar("_taking_turn", default=None)
@@ -235,6 +236,7 @@ class CallOptions:
     muted: bool = False
     quality: Quality = "standard"
     device_timezone: str | None = None
+    practice: bool = False
 
 
 @dataclass(frozen=True)
@@ -942,6 +944,10 @@ class Calls:
         self._live: set[_LiveCall] = set()
         self._watch: asyncio.Task | None = None  # hangs up banned and deleted users' calls
 
+    def is_busy(self, user_id: str) -> bool:
+        """Whether this user has a call being set up or running."""
+        return any(call.user_id == user_id for call in self._live)
+
     def _limits(self) -> CallLimits:
         """A call's own limits, as it connects now: those in effect then hold to its end."""
         limits = self._usage_limits()
@@ -1031,6 +1037,7 @@ class Calls:
             call = Call(
                 conversation, character, admission.llms, options.muted, options.quality,
                 options.device_timezone, admission.own_llm, keys.tts_model, own_image,
+                practice=options.practice,
             )
             answer = await self._answer(SmallWebRTCRequest(offer.sdp, offer.type), serve)
         except BaseException:
@@ -1387,6 +1394,11 @@ class CallTurns(FrameProcessor):
         self._judging: set[asyncio.Task] = set()  # segments' emotions being judged
         self._photos: set[asyncio.Task] = set()  # photos sent, waited on to tell how they came out
         self._turns = TurnTaking(text_only=call.muted)
+        # Japanese practice (「日语练习」): after her correction and its practice pause, what
+        # goes to TTS of the rest of the reply is held here until the browser says to go on
+        # (`practice-continue`, as the user turns the microphone back on); None while not held.
+        self._practice = call.practice
+        self._held: list[Command] | None = None
         self._inputs: asyncio.Queue[str | None] = asyncio.Queue()  # None: wakes it, to hang up
         self._ended = False  # it is hanging up: the outcome is asked no more
         # (`TurnTaking.ending` is that no more turns are taken up, as may be before this)
@@ -1476,6 +1488,12 @@ class CallTurns(FrameProcessor):
             await self._carry_out(self._turns.user_typed(data["text"]))
         elif frame.type == "mute" and isinstance(data.get("muted"), bool):
             await self._carry_out(self._turns.text_only_switched(data["muted"]))
+        elif frame.type == "practice-continue":
+            await self._go_on_from_pause()
+        elif frame.type == "practice" and isinstance(data.get("on"), bool):
+            self._practice = data["on"]
+            if not self._practice:
+                await self._go_on_from_pause()
         elif frame.type == "hang-up":  # the browser closes the connection next
             self._outcome.ended_by("hung_up")
 
@@ -1494,6 +1512,8 @@ class CallTurns(FrameProcessor):
         cut_off: asyncio.Event | None = None  # set once all that is done
         try:
             for command in commands:
+                if isinstance(command, DropReply | StopReply | ClearVoice | Reply | DropTurn):
+                    self._held = None  # what was held at a practice pause goes with the reply
                 match command:
                     case DropReply():
                         cut_off = cut_off or asyncio.Event()
@@ -1506,6 +1526,8 @@ class CallTurns(FrameProcessor):
                         await self.push_frame(InterruptionFrame())
                     case Reply(text=text, number=number):
                         self._start_reply(text, number, after)
+                    case Voice() | FlushVoice() if self._held is not None:
+                        self._held.append(command)  # until the user goes on from the pause
                     case Voice(text=text, reply=reply, segment=segment):
                         await self.push_frame(SegmentTextFrame(text, reply, segment))
                     case FlushVoice(reply=reply, segment=segment):
@@ -1522,6 +1544,12 @@ class CallTurns(FrameProcessor):
         finally:
             if cut_off is not None:
                 cut_off.set()
+
+    async def _go_on_from_pause(self) -> None:
+        """The user goes on from a practice pause: what was held of her reply is voiced."""
+        held, self._held = self._held, None
+        if held:
+            await self._carry_out(held)
 
     async def _take_turns(self) -> None:
         while True:
@@ -1658,6 +1686,7 @@ class CallTurns(FrameProcessor):
         async for event in self._engine.turn(
             self._call.conversation, text, self._call.llms, self._call.device_timezone, stop,
             self._outcome.in_call, self._call.voiced_by, self._call.own_image,
+            practice=self._practice and not self._turns.text_only,
         ):
             if isinstance(event, CallTurnRecorded):
                 recorded = event
@@ -1665,6 +1694,13 @@ class CallTurns(FrameProcessor):
             if isinstance(event, TurnJudged):
                 if turn is not None:
                     turn.see(event)
+                continue
+            if isinstance(event, PracticePause):
+                # Held only with practice on and while her voice is: in text only there is
+                # nothing to read after.
+                if self._practice and self._turns.voicing and not stop.is_set() and self._held is None:
+                    self._held = []
+                    await self._send({"type": "practice-pause", "reply": number, "after": event.after})
                 continue
             if isinstance(event, SegmentComplete):
                 await self._carry_out(self._turns.segment_complete(event.segment))

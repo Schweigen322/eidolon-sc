@@ -182,6 +182,31 @@ export function DirectoryProvider({ children }: { children: ReactNode }) {
     };
   }, [attempt]);
 
+  // Poll station messages only while the app is visible. Background generation is server-side.
+  useEffect(() => {
+    if (!account) return;
+    let running = false;
+    let cancelled = false;
+    const poll = async () => {
+      if (running || document.visibilityState !== "visible") return;
+      running = true;
+      try {
+        const all = await listLatestConversations();
+        if (cancelled) return;
+        setLatest(Object.fromEntries(all.map(c => [c.character_id, c])));
+        const live = heldRef.current;
+        if (live && isHeldShown && all.some(c => c.character_id === live.characterId && c.unread_proactive)) {
+          await live.refreshMessages();
+        }
+      } catch { /* Keep the last snapshot; the next poll retries. */ }
+      finally { running = false; }
+    };
+    const timer = setInterval(() => void poll(), 30000);
+    const visible = () => void poll();
+    document.addEventListener("visibilitychange", visible);
+    return () => { cancelled = true; clearInterval(timer); document.removeEventListener("visibilitychange", visible); };
+  }, [account, isHeldShown]);
+
   const reload = useCallback(() => {
     setFailure(null);
     setCharacters(null);

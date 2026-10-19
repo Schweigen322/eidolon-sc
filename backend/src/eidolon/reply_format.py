@@ -17,6 +17,12 @@ Before her first segment, in a turn she may send a photo in, she can write a pho
 closes (`PhotoTagged`), apart from the segments, neither shown nor voiced. One written
 anywhere else, between segments or in the middle of her words, or after the first, is left
 out of the reply as if never written.
+
+In a call with Japanese practice on (「日语练习」), after correcting what the user said, she
+writes a practice pause, `<pause/>`, between the correction and the rest of her reply: the
+parser says so once the segment before it is complete (`PracticePause`), neither shown nor
+voiced, and the call holds the rest of her voice until the user goes on. One written before
+her first segment, or after the first in a reply, is left out as if never written.
 """
 
 from dataclasses import dataclass, field
@@ -68,6 +74,17 @@ _DIRECTED_CUES = """\
 - 语气提示只写在 <ja> 里；<zh> 只翻译台词，不带语气提示。
 - 只用方括号加英文，和上面这几种成对标签；不要用圆括号、方头括号或别的标签，也不要用日语或中文写提示。"""
 
+PRACTICE_INSTRUCTIONS = """\
+# 日语口语练习
+制作人正在通话里用日语练习口语。只有当制作人这次说的日语里有明显的错误或不自然的地方（助词、活用、词汇、敬语、语序，或者日本人不会这么说）时，才纠正：
+- 纠正时完全保持你自己的口吻、口癖、性格，以及你们现在的关系，像你平时提醒对方时那样自然地说出来。不要变成老师、解说员或客服的语气，不讲语法术语，不长篇解释。
+- 先用一段简短地点出哪里不对、或者怎么说更自然；再单独用一段，把制作人想表达的那句话用自然、正确的日语完整地说一遍。这句话保持制作人的立场和人称，是制作人可以照着念的版本，不要改写成你自己的台词。纠正最多两段。
+- 纠正的段写完后，紧接着单独写一个 <pause/>（不放在任何标签里面），然后再像平时一样回应制作人这句话本身的内容。
+- 以下情况不纠正，也不写 <pause/>：制作人的日语没有问题，或只是口语里常见的省略、随意说法；制作人说的是中文；看起来是语音识别听错了（同音、近音的词，奇怪的断句）。
+- 一次回复最多一个 <pause/>。"""
+"""Added to a call's turn while the user practices Japanese (「日语练习」): she corrects
+what they said in her own voice, then writes a practice pause before replying."""
+
 FORMAT_INSTRUCTIONS = _FORMAT + _CUES
 """The reply format, for a turn whose reply is voiced, if at all, with a model that reads
 only the cues in square brackets, and short ones best."""
@@ -118,10 +135,21 @@ class PhotoTagged:
     type: Literal["photo-tagged"] = field(default="photo-tagged", init=False)
 
 
-ParserEvent = SegmentDelta | SpeechDelta | SegmentComplete | PhotoTagged
+@dataclass(frozen=True)
+class PracticePause:
+    """She wrote a practice pause after her first `after` segments, all complete by now: the
+    call holds the rest of her voice until the user goes on. Stays on the server, apart from
+    the call telling the browser."""
+
+    after: int
+    type: Literal["practice-pause"] = field(default="practice-pause", init=False)
+
+
+ParserEvent = SegmentDelta | SpeechDelta | SegmentComplete | PhotoTagged | PracticePause
 
 _PHOTO: Literal["photo"] = "photo"
-_TAGS = ("<ja>", "<zh>", f"<{_PHOTO}>")
+_PAUSES = ("<pause/>", "<pause />")
+_TAGS = ("<ja>", "<zh>", f"<{_PHOTO}>", *_PAUSES)
 
 
 @dataclass
@@ -141,6 +169,8 @@ class ReplyParser:
     _resume: Lang | None = None  # the line the open photo tag was written in the middle of
     _stray: str = ""
     _said_complete: int = 0  # how many segments are known to be complete
+    _pause_due: bool = False  # a practice pause is written, to be said once its segment is complete
+    _paused: bool = False  # a practice pause has been said in this reply
     _line: CueFilter = field(default_factory=CueFilter)  # the open tag's content
     _events: list[ParserEvent] = field(default_factory=list)
 
@@ -196,6 +226,15 @@ class ReplyParser:
         starts: list[tuple[int, Lang | Literal["photo"]]] = [
             (i, name) for name in names if (i := self._buffer.find(f"<{name}>")) >= 0
         ]
+        pause = self._find_pause()
+        if pause is not None and (not starts or pause[0] < min(starts)[0]):
+            at, marker = pause
+            self._stray += self._buffer[:at]
+            self._buffer = self._buffer[at + len(marker) :]
+            if self.segments:  # one before her first segment is left out
+                self._pause_due = True
+                self._complete_up_to(len(self.segments))
+            return True
         if not starts:
             keep = _partial_suffix(self._buffer, _TAGS)
             self._stray += self._buffer[: len(self._buffer) - keep]
@@ -221,6 +260,11 @@ class ReplyParser:
         one is, which it opens; True if the tag closed."""
         close, photo = f"</{lang}>", f"<{_PHOTO}>"
         end = self._buffer.find(close)
+        while (pause := self._find_pause()) is not None and (end < 0 or pause[0] < end):
+            at, marker = pause  # written in the middle of her words: due once the segment is complete
+            self._buffer = self._buffer[:at] + self._buffer[at + len(marker) :]
+            self._pause_due = True
+            end = self._buffer.find(close)
         opens = self._buffer.find(photo)
         if opens >= 0 and (end < 0 or opens < end):
             if text := self._buffer[:opens]:
@@ -231,7 +275,7 @@ class ReplyParser:
             return False
         closed = end >= 0
         if not closed:
-            end = len(self._buffer) - _partial_suffix(self._buffer, (close, photo))
+            end = len(self._buffer) - _partial_suffix(self._buffer, (close, photo, *_PAUSES))
         text = self._buffer[:end]
         self._buffer = self._buffer[end + len(close) :] if closed else self._buffer[end:]
         if text:
@@ -274,9 +318,20 @@ class ReplyParser:
             self._events.append(SpeechDelta(len(self.segments) - 1, voiced))
 
     def _complete_up_to(self, segments: int) -> None:
-        """Say the first `segments` segments are complete, those not said to be already."""
+        """Say the first `segments` segments are complete, those not said to be already, then
+        the practice pause written after them, if one is due and none has been said."""
         self._events += [SegmentComplete(i) for i in range(self._said_complete, segments)]
         self._said_complete = max(self._said_complete, segments)
+        if self._pause_due and self._said_complete > 0:
+            self._pause_due = False
+            if not self._paused:
+                self._paused = True
+                self._events.append(PracticePause(self._said_complete))
+
+    def _find_pause(self) -> tuple[int, str] | None:
+        """Where the first practice pause written in the buffer is, and how it is written."""
+        found = [(i, m) for m in _PAUSES if (i := self._buffer.find(m)) >= 0]
+        return min(found) if found else None
 
     def _hand_over(self) -> list[ParserEvent]:
         """The events since the last were handed over."""

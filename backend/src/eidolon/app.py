@@ -33,7 +33,7 @@ from eidolon.greetings import (
     greeting_path,
     voxels_path,
 )
-from eidolon.reply_format import SegmentComplete, SegmentDelta, SpeechDelta
+from eidolon.reply_format import PracticePause, SegmentComplete, SegmentDelta, SpeechDelta
 from eidolon.own_keys import BroughtKeys, CallsUnavailable, UnknownService, named_services
 from eidolon.producer import (
     MAX_FORM_OF_ADDRESS_LENGTH,
@@ -98,6 +98,8 @@ class CallRequest(BaseModel):
     conversation_id: str
     muted: bool = False
     quality: Quality = "standard"
+    practice: bool = False
+    """Japanese practice (「日语练习」): she corrects the user's Japanese, then pauses."""
     own_keys: OwnKeysInput | None = None
     """The user's own keys, which their browser keeps, for the call to run on."""
 
@@ -373,7 +375,7 @@ def create_app(backend: Backend) -> FastAPI:
             user_id,
             conversation,
             characters[conversation.character_id],
-            CallOptions(body.call.muted, body.call.quality, device_timezone),
+            CallOptions(body.call.muted, body.call.quality, device_timezone, body.call.practice),
             description,
             body.call.own_keys.brought() if body.call.own_keys else BroughtKeys(),
         )
@@ -385,6 +387,17 @@ def create_app(backend: Backend) -> FastAPI:
         ]
         await calls.add_candidates(user_id, body.pc_id, candidates)
         return {"ok": True}
+
+    @app.get("/api/proactive")
+    def proactive_settings(user_id: UserId) -> dict:
+        return backend.proactive.settings(user_id)
+
+    @app.put("/api/proactive")
+    def save_proactive_settings(body: dict, user_id: UserId) -> dict:
+        try:
+            return backend.proactive.save(user_id, body)
+        except (ValueError, KeyError, TypeError) as exc:
+            raise HTTPException(422, str(exc)) from None
 
     @app.get("/api/profile")
     def get_profile(user_id: UserId) -> dict:
@@ -505,12 +518,14 @@ def create_app(backend: Backend) -> FastAPI:
         """For the conversation list: each character's newest conversation with the user and
         the last thing in it, a message or a conversation event (null while it has none), in
         one request."""
+        unread = backend.proactive.unread(user_id)
         return [
             {
                 "character_id": c.character_id,
                 "conversation_id": c.id,
                 "created_at": c.created_at,
                 "last_message": last_shown(last),
+                **({"unread_proactive": unread[c.character_id]} if unread.get(c.character_id) else {}),
             }
             for c, last in store.latest_conversations(user_id)
         ]
@@ -528,6 +543,7 @@ def create_app(backend: Backend) -> FastAPI:
     def list_messages(conversation_id: str, user_id: UserId) -> list[dict]:
         """The conversation's record: its messages and conversation events, in order."""
         conversation = conversation_or_404(conversation_id, user_id)
+        backend.proactive.seen(user_id, conversation.id)
         return [recorded(entry) for entry in store.record(conversation.id)]
 
     @app.post("/api/conversations/{conversation_id}/turns")
@@ -543,6 +559,7 @@ def create_app(backend: Backend) -> FastAPI:
         brought = body.own_keys.brought() if body.own_keys else BroughtKeys()
         admission = admissions.turn(user_id, conversation.character_id, brought)
         outcome = TurnOutcome(admission.recording, admission.settle)
+        release_busy = backend.proactive.hold(user_id)
 
         async def events() -> AsyncIterator[str]:
             with outcome.running():
@@ -554,11 +571,17 @@ def create_app(backend: Backend) -> FastAPI:
                     outcome.see(event)
                     if isinstance(event, SegmentDelta):
                         outcome.began_speaking()  # the reply's first words have appeared
-                    if isinstance(event, SegmentComplete | SpeechDelta | TurnJudged):
+                    if isinstance(event, SegmentComplete | SpeechDelta | PracticePause | TurnJudged):
                         continue
                     yield _sse(shown(event))
 
-        return _TurnResponse(events(), lambda: outcome.over(cut_short_by_failure=False))
+        def finish() -> None:
+            try:
+                outcome.over(cut_short_by_failure=False)
+            finally:
+                release_busy()
+
+        return _TurnResponse(events(), finish)
 
     return app
 

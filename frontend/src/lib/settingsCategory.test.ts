@@ -88,7 +88,7 @@ describe("一级列表上的摘要", () => {
   });
 
   it("通话是通话音质 · 电话质感开／关", () => {
-    const call = { micId: "", quality: "high", muted: false, phoneTexture: true } as const;
+    const call = { micId: "", quality: "high", muted: false, phoneTexture: true, practice: false } as const;
     expect(settingsSummaries({ ...loading, call }).call).toBe("高保真 · 电话质感开");
     expect(settingsSummaries({ ...loading, call: { ...call, phoneTexture: false } }).call).toBe("高保真 · 电话质感关");
   });

@@ -61,6 +61,8 @@ export type Call = {
   setTextOnly: (textOnly: boolean) => void;
   /** Turn the microphone's track on or off in the browser (GLOSSARY.md「麦克风静音」). */
   setMicEnabled: (enabled: boolean) => void;
+  /** Go on from a practice pause (「日语练习」): she says the rest of her reply. */
+  continuePractice: () => void;
   /** The microphone the call connected with. */
   mic: MicInUse;
   /** Send from another microphone without interrupting the call, muted if it was.
@@ -121,6 +123,7 @@ export async function startCall(
       conversation_id: conversationId,
       muted: preferences.muted,
       quality: preferences.quality,
+      practice: preferences.practice,
     };
     if (ownKeys) requestData.own_keys = ownKeys;
     await client.connect({
@@ -145,6 +148,7 @@ export async function startCall(
     sendText: (text) => connected.sendClientMessage("user-text", { text }),
     setTextOnly: (textOnly) => connected.sendClientMessage("mute", { muted: textOnly }),
     setMicEnabled: (enabled) => microphone.enableMic(enabled),
+    continuePractice: () => connected.sendClientMessage("practice-continue", {}),
     mic: microphone.inUse,
     switchMic: (micId) => microphone.updateMic(micId),
     hangUp: async () => {

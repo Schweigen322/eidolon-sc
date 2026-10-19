@@ -45,6 +45,10 @@ def hot_words(
     }
     found = [r.written for r in readings]
     for character in characters:
+        # The configured kana name separates surname and given name with whitespace.
+        # Include the given reading too (郁田はるき -> はるき), never erroneous STT forms.
+        if character.name_kana and len(parts := character.name_kana.split()) == 2:
+            found.append(parts[1])
         if not character.name_zh:
             continue
         found.append(character.name_zh)

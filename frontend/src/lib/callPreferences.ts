@@ -1,4 +1,5 @@
-// How this device takes calls: microphone, call quality, the mute switch and phone texture.
+// How this device takes calls: microphone, call quality, the mute switch, phone texture and
+// Japanese practice.
 // Kept in this browser's local storage.
 
 export type Quality = "low" | "standard" | "high";
@@ -17,10 +18,13 @@ export type CallPreferences = {
   muted: boolean;
   /** Make the character's voice sound as if over a phone line (GLOSSARY.md「电话质感」). */
   phoneTexture: boolean;
+  /** Japanese practice (「日语练习」): she corrects the user's Japanese in her own voice, then
+   * pauses with the microphone off until the user turns it back on. */
+  practice: boolean;
 };
 
 const STORAGE_KEY = "eidolon.callPreferences";
-const DEFAULTS: CallPreferences = { micId: "", quality: "standard", muted: false, phoneTexture: false };
+const DEFAULTS: CallPreferences = { micId: "", quality: "standard", muted: false, phoneTexture: false, practice: false };
 
 export function loadCallPreferences(): CallPreferences {
   try {
@@ -30,6 +34,7 @@ export function loadCallPreferences(): CallPreferences {
       quality: stored.quality in QUALITY_LABELS ? stored.quality : DEFAULTS.quality,
       muted: typeof stored.muted === "boolean" ? stored.muted : DEFAULTS.muted,
       phoneTexture: typeof stored.phoneTexture === "boolean" ? stored.phoneTexture : DEFAULTS.phoneTexture,
+      practice: typeof stored.practice === "boolean" ? stored.practice : DEFAULTS.practice,
     };
   } catch {
     return { ...DEFAULTS };

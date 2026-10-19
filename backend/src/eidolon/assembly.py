@@ -53,6 +53,7 @@ from eidolon.price_catalog import Catalog
 from eidolon.prices import Prices
 from eidolon.own_keys import LLMService, OwnImageService, OwnKeys, ProviderLLMService
 from eidolon.photos import Photos
+from eidolon.proactive import Proactive
 from eidolon.proxy import ProxyRoutes
 from eidolon.readings import load_readings, readings_path
 from eidolon.rerank import (
@@ -112,6 +113,7 @@ class Backend:
     backups: Backups
     """The database's backups, as the admin console runs them, and the record of each."""
     photos: Photos
+    proactive: Proactive
     """The photos she sends with her replies, being generated."""
     world: World | None = None
     """The world setting; None without its data file."""
@@ -124,6 +126,7 @@ class Backend:
         fresh from now on, fetching them in the background."""
         await self.config.start()
         self._keeping_fresh = asyncio.create_task(self.prices.catalog.keep_fresh())
+        self.proactive.start()
 
     async def aclose(self) -> None:
         """Close what `build` opened, last opened first."""
@@ -323,6 +326,8 @@ def build(
     )
     closers.append(gifts.close)
     config.on_change(gifts.notice)
+    proactive = Proactive(store, characters, config, clock, affinities.cooldown_until, calls.is_busy)
+    closers.append(proactive.aclose)
     return Backend(
         settings=settings,
         store=store,
@@ -347,6 +352,7 @@ def build(
         gifts=gifts,
         backups=backups,
         photos=photos,
+        proactive=proactive,
         world=world,
         _closers=closers,
     )

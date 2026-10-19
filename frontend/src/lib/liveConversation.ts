@@ -34,9 +34,11 @@ import {
   movedCard,
   nextPacedAt,
   pacedCard,
+  pagesOf,
   previousLineOf,
   type LineCard,
   type LineCardEvent,
+  type PageLine,
 } from "@/lib/linePacing";
 import { CALM, type StandDirection } from "@/lib/standAnimations";
 import { directionOf, directStand, startingStand, type StandEvent, type StandState } from "@/lib/standDirection";
@@ -124,8 +126,16 @@ export type Snapshot = {
    * until it has shown two. Never a segment it skipped, nor one of a reply dropped for a
    * follow-on. */
   previousLine: Segment | null;
+  /** What the line card has shown in this call, a page for each of her replies, to page back
+   * through. */
+  pages: PageLine[][];
+  /** The call under way or the last one was dialed with Japanese practice on (「日语练习」). */
+  practiceCall: boolean;
   /** The microphone is off in the browser (GLOSSARY.md「麦克风静音」). */
   micMuted: boolean;
+  /** She paused after correcting the user's Japanese (「日语练习」), the microphone turned off
+   * for the user to practise; turning it back on goes on with her reply. */
+  practicing: boolean;
   /** The microphone the call is using; empty for the system default. */
   micId: string;
   /** Something to say about the microphone: the chosen one is not there and the system
@@ -174,7 +184,7 @@ export type Snapshot = {
 
 type State = Omit<
   Snapshot,
-  "entries" | "line" | "previousLine" | "stand" | "canDial" | "canStartNew" | "cooling" | "ended" | "callPhoto"
+  "entries" | "line" | "previousLine" | "pages" | "stand" | "canDial" | "canStartNew" | "cooling" | "ended" | "callPhoto"
 > & {
   log: ConversationLog;
   /** The photo she sent last in the call under way or the last one, by its id. */
@@ -194,6 +204,8 @@ const IDLE: Omit<State, "log" | "card" | "stand" | "dial" | "callPhotoId"> = {
   pickingMic: false,
   hearing: "",
   micMuted: false,
+  practicing: false,
+  practiceCall: false,
   micId: "",
   micNotice: null,
   busy: false,
@@ -212,6 +224,7 @@ export const NOT_OPEN: Snapshot = {
   entries: [],
   line: null,
   previousLine: null,
+  pages: [],
   stand: CALM,
   canDial: false,
   canStartNew: false,
@@ -442,6 +455,8 @@ export class LiveConversation {
       call: { phase: "dialing", dial },
       dial,
       micMuted: false,
+      practicing: false,
+      practiceCall: preferences.practice,
       failure: null,
       callPhotoId: null,
       newPhoto: false,
@@ -568,7 +583,12 @@ export class LiveConversation {
     if (!this.call) return;
     const micMuted = !this.state.micMuted;
     this.call.setMicEnabled(!micMuted);
-    this.update({ micMuted });
+    // Turned back on at a practice pause: she goes on with her reply.
+    if (!micMuted && this.state.practicing) {
+      this.call.continuePractice();
+      return this.moveCard({ type: "practice-continue" }, { micMuted, practicing: false });
+    }
+    this.update({ micMuted, practicing: false });
   }
 
   /** Switch the call to another microphone; it becomes the default for later calls too.
@@ -607,8 +627,15 @@ export class LiveConversation {
           this.ports.onListChanged();
         }
         return;
+      case "practice-pause":
+        if (!this.call || this.state.textOnly) return this.update({ stand });
+        this.call.setMicEnabled(false);
+        return this.moveCard(
+          { type: "practice-pause", reply: event.reply, after: event.after },
+          { micMuted: true, practicing: true, stand },
+        );
       case "user":
-        return this.applyTurnEvent(event, { hearing: "", stand }, () => ({
+        return this.applyTurnEvent(event, { hearing: "", practicing: false, stand }, () => ({
           type: "reply",
           number: event.reply,
           voiced: !this.state.textOnly,
@@ -774,6 +801,18 @@ export class LiveConversation {
     );
   }
 
+  /** Refresh an unsolicited station message without interrupting a draft, reply or call. */
+  async refreshMessages(): Promise<void> {
+    const id = this.openConversationId();
+    const before = this.published;
+    if (!id || this.disposed || before.busy || before.draft || isLive(before.call)) return;
+    const messages = await this.ports.listMessages(id);
+    if (!this.disposed && this.published === before && this.openConversationId() === id) {
+      this.apply({ type: "loaded", messages });
+      this.ports.onListChanged();
+    }
+  }
+
   /** The conversation to send to and call in, or null if none is open. */
   private openConversationId(): string | null {
     return openIdOf(this.state.conversation);
@@ -802,6 +841,7 @@ export class LiveConversation {
         call: end ? { phase: "ended", dial: this.state.dial, end, seconds } : { phase: "idle" },
         hearing: "",
         micMuted: false,
+        practicing: false,
         micId: "",
         micNotice: null,
         newPhoto: false,
@@ -927,6 +967,7 @@ function toSnapshot(state: State): Snapshot {
     entries: log.entries,
     line: lineOf(card),
     previousLine: previousLineOf(card),
+    pages: pagesOf(card),
     stand: directionOf(stand),
     canDial: free && !isCooling(state) && !isEnded(state),
     canStartNew: canStartNew(state),

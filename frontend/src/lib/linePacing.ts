@@ -14,6 +14,8 @@
 //   Once the user's words start the next turn, the card stays where it is until her next reply's
 //   first segment: the user speaking alone may come to nothing, and stops nothing she says.
 // - A reply dropped for a follow-on leaves no trace on the card.
+// - At a practice pause (「日语练习」) the rest of her reply is held: the card stays on her
+//   correction, not playing out at her pace what she has not said, until her voice goes on.
 
 import type { Segment, SegmentPlaying } from "@/lib/api";
 
@@ -64,6 +66,10 @@ export type LineCard = {
   reply: Reply | null;
   /** Since when her voice has not been playing; null while it plays. */
   quietSince: number | null;
+  /** The rest of her latest reply is held at a practice pause: the card does not move on at her pace. */
+  held: boolean;
+  /** For each of her replies with a practice pause, how many of its first segments are her correction. */
+  corrections: Record<number, number>;
 };
 
 export type LineCardEvent =
@@ -81,11 +87,15 @@ export type LineCardEvent =
    * dropped for a follow-on, which comes to the same here. Her `done` may come before the
    * user's words are taken up, so it is told apart by this, not by the next reply. */
   | { type: "interrupted" }
+  /** She paused after correcting the user's Japanese in the first `after` segments of this reply. */
+  | { type: "practice-pause"; reply: number; after: number }
+  /** The user goes on from a practice pause: her voice comes back to the rest of the reply. */
+  | { type: "practice-continue" }
   /** The call is over: the card keeps its last moment, and moves on no more. */
   | { type: "call-over" };
 
 /** As a call starts: nothing shown, and her voice has not played. */
-export const BLANK_CARD: LineCard = { shown: [], reply: null, quietSince: -Infinity };
+export const BLANK_CARD: LineCard = { shown: [], reply: null, quietSince: -Infinity, held: false, corrections: {} };
 
 /** The card moved on by this event, at `now`. */
 export function movedCard(card: LineCard, event: LineCardEvent, now: number): LineCard {
@@ -97,6 +107,7 @@ export function movedCard(card: LineCard, event: LineCardEvent, now: number): Li
       return {
         ...card,
         shown: card.shown.filter((s) => s.reply !== dropped),
+        held: false,
         reply: { number: event.number, voiced: event.voiced, segments: [], recordedAt: null, interrupted: false },
       };
     }
@@ -113,7 +124,15 @@ export function movedCard(card: LineCard, event: LineCardEvent, now: number): Li
     case "voice":
       return { ...card, quietSince: event.playing ? null : (card.quietSince ?? now) };
     case "interrupted":
-      return card.reply ? { ...card, reply: { ...card.reply, interrupted: true } } : card;
+      return card.reply ? { ...card, held: false, reply: { ...card.reply, interrupted: true } } : card;
+    case "practice-pause":
+      return {
+        ...card,
+        held: event.reply === card.reply?.number,
+        corrections: { ...card.corrections, [event.reply]: event.after },
+      };
+    case "practice-continue":
+      return card.held ? { ...card, held: false } : card;
     case "call-over":
       return { ...card, reply: null, quietSince: card.quietSince ?? now };
   }
@@ -136,7 +155,7 @@ export function nextPacedAt(card: LineCard): number | null {
  * if it does not keep her pace now. */
 function nextPaced(card: LineCard): NextLine | null {
   const { reply } = card;
-  if (!reply) return null;
+  if (!reply || card.held) return null;
   return reply.voiced ? nextVoiced(card, reply) : nextUnvoiced(card, reply);
 }
 
@@ -166,6 +185,27 @@ function nextVoiced(card: LineCard, reply: Reply): NextLine | null {
         }
       : { segment: 0, at: reply.recordedAt + VOICE_WAIT_MS };
   return next.segment < reply.segments.length ? next : null;
+}
+
+/** One of her lines the card has shown: in a call with Japanese practice, whether it is part of
+ * her correction, which stays readable while the rest is hidden for listening. */
+export type PageLine = { key: string; text: Segment; correction: boolean };
+
+/** What the card has shown in this call, a page for each of her replies, in order. */
+export function pagesOf(card: LineCard): PageLine[][] {
+  const pages: PageLine[][] = [];
+  let reply: number | null = null;
+  for (const s of card.shown) {
+    const line = {
+      key: `${s.reply}:${s.segment}`,
+      text: s.text,
+      correction: s.segment < (card.corrections[s.reply] ?? 0),
+    };
+    if (s.reply === reply) pages.at(-1)!.push(line);
+    else pages.push([line]);
+    reply = s.reply;
+  }
+  return pages;
 }
 
 /** The line the card shows; null until it has shown one. */

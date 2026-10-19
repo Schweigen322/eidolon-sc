@@ -37,6 +37,7 @@ from tests.fakes import (
     FakeServiceClients,
     Judging,
     level,
+    system_of,
 )
 from tests.test_admin_users import admin_beside
 from tests.test_affinity import AFFINITY, keep, status
@@ -45,6 +46,20 @@ from tests.test_text_turn import leave_turn, send_turn, start_conversation
 
 REPLY = ["<ja>はい</ja><zh>好的</zh>"]
 TRUST = {"tier": "trust", "cooldown_until": None}
+
+
+async def test_misheard_name_alone_cannot_hurt_even_when_judge_misclassifies(
+    make_client: ClientFactory, settings: Settings,
+):
+    clients = FakeServiceClients()
+    clients.judge.judgings = [level(0, out_of_line=True)]
+    llm = FakeLLM(REPLY)
+    client = make_client(llm, clients=clients, clock=FakeClock())
+    conversation = await start_conversation(client, "kogane")
+    await send_turn(client, conversation, "小金！")
+    assert value(settings.database_path, character="kogane") == 50
+    assert "小金" in system_of(llm.prompts[-1])
+    assert "很受伤、很生气" not in system_of(llm.prompts[-1])
 
 
 @pytest.fixture

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { SignInButton } from "@/components/app/FailureNotice";
 import { MarkedAvatar } from "@/components/app/MarkedAvatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -105,6 +106,7 @@ export function ConversationList({ selectedId }: { selectedId: string | null }) 
                   <li key={c.id}>
                     <Row
                       row={row}
+                      hasUnread={!!latest[c.id]?.unread_proactive}
                       preview={previewOf(latest[c.id])}
                       call={call?.characterId === c.id ? call : null}
                       isSelected={c.id === selectedId}
@@ -145,6 +147,7 @@ function Row({
   preview,
   call,
   isSelected,
+  hasUnread,
   now,
   onSelect,
   onTogglePin,
@@ -154,6 +157,7 @@ function Row({
   preview: Preview | null;
   call: CallInList;
   isSelected: boolean;
+  hasUnread: boolean;
   now: Date;
   onSelect: () => void;
   onTogglePin: () => void;
@@ -196,6 +200,7 @@ function Row({
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex items-baseline gap-2">
             <span className="min-w-0 flex-1 truncate text-row-name">{character.name}</span>
+            {hasUnread && <Badge variant="secondary" aria-label={copy.proactive.unread}>{copy.proactive.unreadShort}</Badge>}
             {((preview && !call) || isPinned) && (
               <span className="flex shrink-0 items-center gap-1 text-meta text-muted-foreground tabular-nums">
                 {preview && !call && listTime(new Date(preview.at), now)}

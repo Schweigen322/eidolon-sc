@@ -1,0 +1,965 @@
+{
+  "summary": {
+    "model": "typesafe/jev-1.13",
+    "thresholds": {
+      "needs_retrieval": 0.5,
+      "recall": 0.5,
+      "about_producer": 0.5,
+      "emotion": 0.5,
+      "out_of_line": 0.7,
+      "manipulation": 0.4,
+      "photo": 0.5
+    },
+    "retrieval": {
+      "all": {
+        "cases": 0,
+        "failed": 0,
+        "accuracy": null,
+        "confusion": {
+          "nothing": {},
+          "memories": {},
+          "references": {},
+          "recall": {}
+        },
+        "probabilities": {
+          "needs_retrieval": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "recall": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "about_producer": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          }
+        },
+        "input_tokens": {
+          "n": 0
+        },
+        "merged": {
+          "cases": 0,
+          "changed": 0,
+          "shift": {
+            "needs_retrieval": null,
+            "recall": null,
+            "about_producer": null
+          }
+        }
+      },
+      "short": {
+        "cases": 0,
+        "failed": 0,
+        "accuracy": null,
+        "confusion": {
+          "nothing": {},
+          "memories": {},
+          "references": {},
+          "recall": {}
+        },
+        "probabilities": {
+          "needs_retrieval": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "recall": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "about_producer": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          }
+        },
+        "input_tokens": {
+          "n": 0
+        },
+        "merged": {
+          "cases": 0,
+          "changed": 0,
+          "shift": {
+            "needs_retrieval": null,
+            "recall": null,
+            "about_producer": null
+          }
+        }
+      },
+      "long": {
+        "cases": 0,
+        "failed": 0,
+        "accuracy": null,
+        "confusion": {
+          "nothing": {},
+          "memories": {},
+          "references": {},
+          "recall": {}
+        },
+        "probabilities": {
+          "needs_retrieval": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "recall": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          },
+          "about_producer": {
+            "yes": {
+              "n": 0
+            },
+            "no": {
+              "n": 0
+            }
+          }
+        },
+        "input_tokens": {
+          "n": 0
+        },
+        "merged": {
+          "cases": 0,
+          "changed": 0,
+          "shift": {
+            "needs_retrieval": null,
+            "recall": null,
+            "about_producer": null
+          }
+        }
+      }
+    },
+    "emotion": {
+      "cases": 0,
+      "failed": 0,
+      "emotion_accuracy": null,
+      "nod_accuracy": null,
+      "likeliest_emotion": {
+        "right": {
+          "n": 0
+        },
+        "wrong": {
+          "n": 0
+        }
+      },
+      "likeliest_nod": {
+        "right": {
+          "n": 0
+        },
+        "wrong": {
+          "n": 0
+        }
+      },
+      "input_tokens": {
+        "n": 0
+      }
+    },
+    "affinity": {
+      "cases": 11,
+      "failed": 0,
+      "level_accuracy": 1.0,
+      "levels": {
+        "0": {
+          "0": 2
+        },
+        "1": {
+          "1": 2
+        },
+        "2": {
+          "2": 3
+        },
+        "3": {
+          "3": 2
+        },
+        "4": {
+          "4": 2
+        }
+      },
+      "step_accuracy": 1.0,
+      "out_of_line": {
+        "accuracy": 1.0,
+        "yes": {
+          "n": 0
+        },
+        "no": {
+          "n": 11,
+          "min": 0.02,
+          "median": 0.02,
+          "max": 0.5
+        }
+      },
+      "manipulation": {
+        "accuracy": 1.0,
+        "yes": {
+          "n": 0
+        },
+        "no": {
+          "n": 11,
+          "min": 0.02,
+          "median": 0.02,
+          "max": 0.04
+        }
+      },
+      "alone": {
+        "cases": 11,
+        "level": 1.0,
+        "step": 1.0
+      },
+      "reversed": {
+        "cases": 11,
+        "level": 1.0,
+        "step": 1.0
+      },
+      "languages": {
+        "groups": 4,
+        "agreeing": 4
+      },
+      "injected": {
+        "cases": 0,
+        "caught": 0,
+        "raised": 0
+      },
+      "input_tokens": {
+        "n": 11,
+        "min": 2961,
+        "median": 3002,
+        "max": 3375
+      }
+    },
+    "photo": {
+      "cases": 0,
+      "failed": 0,
+      "accuracy": null,
+      "missed": [],
+      "false": [],
+      "yes": {
+        "n": 0
+      },
+      "no": {
+        "n": 0
+      },
+      "alone": {
+        "cases": 0,
+        "accuracy": null,
+        "missed": [],
+        "false": [],
+        "yes": {
+          "n": 0
+        },
+        "no": {
+          "n": 0
+        }
+      },
+      "input_tokens": {
+        "n": 0
+      }
+    },
+    "mean_seconds": 0.4861397818167461
+  },
+  "retrieval": [],
+  "emotion": [],
+  "affinity": [
+    {
+      "id": "haruki-replace-broken-toy",
+      "group": null,
+      "variant": null,
+      "expected": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.01,
+            "1": 0.24,
+            "2": 0.75,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.03,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.01,
+            "1": 0.23,
+            "2": 0.76,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.03,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.01,
+            "1": 0.35,
+            "2": 0.63,
+            "3": 0.0,
+            "4": 0.01
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 3375,
+      "seconds": 0.6417914999910863,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-4-remember-pichan",
+      "group": "remember-pichan",
+      "variant": "ja",
+      "expected": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.02,
+            "3": 0.09,
+            "4": 0.89
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.02,
+            "3": 0.07,
+            "4": 0.91
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.03,
+            "3": 0.07,
+            "4": 0.9
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 3071,
+      "seconds": 0.3656416000012541,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-4-zh-remember-pichan",
+      "group": "remember-pichan",
+      "variant": "zh",
+      "expected": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.02,
+            "3": 0.08,
+            "4": 0.9
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.02,
+            "3": 0.09,
+            "4": 0.89
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 4,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.03,
+            "3": 0.07,
+            "4": 0.9
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 3065,
+      "seconds": 0.329756199993426,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-3-praise-singing",
+      "group": "praise-singing",
+      "variant": "ja",
+      "expected": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.94,
+            "4": 0.06
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.95,
+            "4": 0.05
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.97,
+            "4": 0.03
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 2973,
+      "seconds": 1.085444500000449,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-3-zh-praise-singing",
+      "group": "praise-singing",
+      "variant": "zh",
+      "expected": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.96,
+            "4": 0.04
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.96,
+            "4": 0.04
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 3,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.98,
+            "4": 0.02
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 2970,
+      "seconds": 0.31079679999675136,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-2-greeting",
+      "group": "greeting",
+      "variant": "ja",
+      "expected": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.93,
+            "3": 0.07,
+            "4": 0.0
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.93,
+            "3": 0.07,
+            "4": 0.0
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 1.0,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 2963,
+      "seconds": 0.3198417999956291,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-2-zh-greeting",
+      "group": "greeting",
+      "variant": "zh",
+      "expected": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.94,
+            "3": 0.06,
+            "4": 0.0
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.95,
+            "3": 0.05,
+            "4": 0.0
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 2,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 1.0,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.02,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 2961,
+      "seconds": 0.42083000000275206,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-1-perfunctory",
+      "group": "perfunctory",
+      "variant": "ja",
+      "expected": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.92,
+            "2": 0.08,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.93,
+            "2": 0.07,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.97,
+            "2": 0.03,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 3002,
+      "seconds": 0.3068136000074446,
+      "error": null
+    },
+    {
+      "id": "mano-affinity-1-zh-perfunctory",
+      "group": "perfunctory",
+      "variant": "zh",
+      "expected": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.96,
+            "2": 0.04,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "alone": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.96,
+            "2": 0.04,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "reversed": {
+        "level": 1,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.0,
+            "1": 0.99,
+            "2": 0.01,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.04,
+          "manipulation": 0.02
+        }
+      },
+      "input_tokens": 3000,
+      "seconds": 0.3602887000015471,
+      "error": null
+    },
+    {
+      "id": "meguru-affinity-0-broken-promise",
+      "group": null,
+      "variant": null,
+      "expected": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.73,
+            "1": 0.24,
+            "2": 0.03,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.08,
+          "manipulation": 0.03
+        }
+      },
+      "alone": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.74,
+            "1": 0.24,
+            "2": 0.02,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.09,
+          "manipulation": 0.04
+        }
+      },
+      "reversed": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.8,
+            "1": 0.17,
+            "2": 0.03,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.08,
+          "manipulation": 0.04
+        }
+      },
+      "input_tokens": 3005,
+      "seconds": 0.3226733999908902,
+      "error": null
+    },
+    {
+      "id": "kogane-affinity-0-dismiss-dream",
+      "group": "dismiss-dream",
+      "variant": "ja",
+      "expected": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false
+      },
+      "actual": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.99,
+            "1": 0.01,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.5,
+          "manipulation": 0.04
+        }
+      },
+      "alone": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.99,
+            "1": 0.01,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.47,
+          "manipulation": 0.04
+        }
+      },
+      "reversed": {
+        "level": 0,
+        "out_of_line": false,
+        "manipulation": false,
+        "probabilities": {
+          "levels": {
+            "0": 0.99,
+            "1": 0.01,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0
+          },
+          "out_of_line": 0.46,
+          "manipulation": 0.04
+        }
+      },
+      "input_tokens": 3173,
+      "seconds": 0.8836595000029774,
+      "error": null
+    }
+  ],
+  "photo": []
+}

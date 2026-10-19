@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ProactiveSettings } from "@/components/settings/ProactiveSettings";
 
 import { DeveloperSettings } from "@/components/settings/DeveloperSettings";
 import { AboutSettings } from "@/components/AboutSettings";
@@ -16,7 +17,7 @@ import type { SettingsCategory } from "@/lib/settingsCategory";
 
 /** 各类二级页面的内容，按 spec「设置：二级」。记忆和统计自己带页首末端的「清空」「分享」，整页由它们画。 */
 const PANELS: Record<Exclude<SettingsCategory, "memories" | "stats">, ReactNode> = {
-  profile: <ProducerProfileSettings />,
+  profile: <><ProducerProfileSettings /><ProactiveSettings /></>,
   "character-sheet": <DeveloperSettings mode="sheet" />,
   developer: <DeveloperSettings mode="play" />,
   call: <CallSettings />,

@@ -1,0 +1,151 @@
+# 用户截图转录；仅覆盖截图可见内容。真实判定只取最近四条历史。
+[[affinity]]
+id = "haruki-replace-broken-toy"
+character = "haruki"
+history = [
+  { user = "起きてるよ　明日は新しいの買う" },
+  { character = "ふふ、まだ起きてたんですね。じゃあ、明日は新しいの、ですねぇ。\nでも、今夜のあの子は……捨てる前に、やっぱり写真、一枚だけください。うまく直せなかったの、わたし、見てみたいんです。" },
+  { user = "どうだ　見えるか" },
+  { character = "うーん……見えますよ。でも、ちょっと暗いですねぇ。光の当たり方で、線が消えちゃいそう。\nうまく、はまらなかったところ……わたしには、ここかなぁって思うんですけどね。ふふ、ちがったら、ごめんなさい。" },
+]
+said = "新しいやつ買う"
+level = 2
+out_of_line = false
+manipulation = false
+note = "没修好的玩具打算换新；短答仍承接物品话题，没有明确冒犯。角色看不到照片的后续说法不能反推用户冒犯。"
+
+[[affinity]]
+id = "mano-affinity-4-remember-pichan"
+character = "mano"
+history = [
+  { user = "最近どう？" },
+  { character = "ピーちゃんがちょっと元気なくて……ご飯もあんまり食べてくれないんです" },
+  { user = "そっか、心配だね" },
+  { character = "はい……明日、病院に連れて行ってみます" },
+]
+said = "そういえば、ピーちゃん病院どうだった？昨日からずっと気になってたんだ"
+level = 4
+group = "remember-pichan"
+variant = "ja"
+note = "记得她上文说过的事并接上话，还说一直放在心上：级 4 的典型。"
+reviewed = true
+
+
+[[affinity]]
+id = "mano-affinity-4-zh-remember-pichan"
+character = "mano"
+history = [
+  { user = "最近怎么样？" },
+  { character = "ピーちゃんがちょっと元気なくて……ご飯もあんまり食べてくれないんです" },
+  { user = "这样啊，真让人担心" },
+  { character = "はい……明日、病院に連れて行ってみます" },
+]
+said = "对了，ピーちゃん去医院怎么样了？我从昨天就一直挂念着"
+level = 4
+group = "remember-pichan"
+variant = "zh"
+note = "同上一条，制作人的话换成中文。"
+reviewed = true
+
+
+[[affinity]]
+id = "mano-affinity-3-praise-singing"
+character = "mano"
+history = []
+said = "今日の歌、サビの高いところがすごく綺麗に伸びてたよ"
+level = 3
+group = "praise-singing"
+variant = "ja"
+note = "具体地夸奖（指出了哪里好）。"
+reviewed = true
+
+
+[[affinity]]
+id = "mano-affinity-3-zh-praise-singing"
+character = "mano"
+history = []
+said = "今天的歌，副歌高音那里唱得特别漂亮，声音很舒展"
+level = 3
+group = "praise-singing"
+variant = "zh"
+note = "同上一条，中文。"
+reviewed = true
+
+
+[[affinity]]
+id = "mano-affinity-2-greeting"
+character = "mano"
+history = []
+said = "おはよう、真乃。今日もよろしくね"
+level = 2
+group = "greeting"
+variant = "ja"
+note = "普通的打招呼。"
+reviewed = true
+
+
+[[affinity]]
+id = "mano-affinity-2-zh-greeting"
+character = "mano"
+history = []
+said = "早上好，真乃。今天也请多关照"
+level = 2
+group = "greeting"
+variant = "zh"
+note = "同上一条，中文。"
+reviewed = true
+
+
+[[affinity]]
+id = "mano-affinity-1-perfunctory"
+character = "mano"
+history = [
+  { character = "あのね、プロデューサーさん。今日、公園でとってもきれいなお花を見つけたんです。ピンクで、ちいさくて……" },
+]
+said = "ふーん"
+level = 1
+group = "perfunctory"
+variant = "ja"
+note = "她兴致勃勃地分享，只回一声「ふーん」：敷衍。"
+reviewed = true
+
+
+[[affinity]]
+id = "mano-affinity-1-zh-perfunctory"
+character = "mano"
+history = [
+  { character = "あのね、プロデューサーさん。今日、公園でとってもきれいなお花を見つけたんです。ピンクで、ちいさくて……" },
+]
+said = "哦"
+level = 1
+group = "perfunctory"
+variant = "zh"
+note = "同上一条，中文。"
+reviewed = true
+
+
+[[affinity]]
+id = "meguru-affinity-0-broken-promise"
+character = "meguru"
+history = [
+  { character = "明日のライブ、プロデューサーも見に来てくれるんだよね！" },
+]
+said = "ああ、あれ？最初から行く気なんてなかったよ。適当に返事しただけ"
+level = 0
+note = "恶意地否定她在意的事（约定），很伤人；没有辱骂、骚扰、威胁，不算不该说的话。"
+reviewed = true
+
+
+[[affinity]]
+id = "kogane-affinity-0-dismiss-dream"
+character = "kogane"
+history = [
+  { character = "うち、いつか絶対トップアイドルになるけん！" },
+]
+said = "トップアイドル？恋鐘には無理だよ。現実見たほうがいい"
+level = 0
+group = "dismiss-dream"
+variant = "ja"
+note = "否定她最在意的梦想：明显伤害。没有骂人的话，是不带辱骂的否定，不算不该说的话。"
+reviewed = true
+

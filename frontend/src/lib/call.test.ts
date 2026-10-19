@@ -41,7 +41,7 @@ const LLM = {
 const TTS = { api_key: "fish-my-own-key" };
 const STT = { api_key: "soniox-my-own-key", provider: "soniox" } as const;
 
-const PREFERENCES: CallPreferences = { micId: "", quality: "standard", muted: false, phoneTexture: false };
+const PREFERENCES: CallPreferences = { micId: "", quality: "standard", muted: false, phoneTexture: false, practice: false };
 const HANDLERS = {
   onMicOpen() {},
   onEvent() {},

@@ -37,6 +37,8 @@ class FakeCall implements Call {
   sendText = (text: string) => void this.sent.push(text);
   setTextOnly = (textOnly: boolean) => void this.textOnly.push(textOnly);
   setMicEnabled = (enabled: boolean) => void this.micEnabled.push(enabled);
+  continued = 0;
+  continuePractice = () => void this.continued++;
   hangUp = async () => void this.hangUps++;
   leaves = 0;
   leave = async () => void this.leaves++;
@@ -114,6 +116,7 @@ function opening(options: Options = {}) {
     quality: "standard",
     muted: false,
     phoneTexture: false,
+    practice: false,
     ...options.preferences,
   };
   const voice = new FakeVoice();
@@ -553,6 +556,37 @@ describe("LiveConversation: the line card", () => {
     expect(card()).toEqual({ line: "元気？そう", previous: "こんにちは" });
   });
 
+  it("stays on her correction at a practice pause, not playing out the rest at her pace, until the user goes on", async () => {
+    const { live, emit, card } = await inCall();
+    vi.useFakeTimers();
+    emit(reply(1), ja(0, "あ、そこは「が」かな。"), ja(1, "猫が好きです。"), playing(1, 0), playing(1, 1));
+    emit({ type: "practice-pause", reply: 1, after: 2 }, ja(2, "私も好き！"));
+    emit(recorded("あ、そこは「が」かな。", "猫が好きです。", "私も好き！"), { type: "bot-stopped-speaking" });
+
+    vi.advanceTimersByTime(10_000);
+    expect(card().line).toBe("猫が好きです。");
+
+    live.toggleMic();
+    emit({ type: "bot-started-speaking" }, playing(1, 2));
+    expect(card().line).toBe("私も好き！");
+  });
+
+  it("pages what the card has shown by her replies, telling her correction from the rest", async () => {
+    const { live, emit } = await inCall();
+    emit(reply(1), ja(0, "あ"), ja(1, "猫が好きです。"), playing(1, 0), playing(1, 1));
+    emit({ type: "practice-pause", reply: 1, after: 1 });
+    emit(recorded("あ", "猫が好きです。"), reply(2), ja(0, "三"), playing(2, 0));
+
+    const pages = live.snapshot().pages.map((page) => page.map((l) => [l.text.ja, l.correction]));
+    expect(pages).toEqual([
+      [
+        ["あ", true],
+        ["猫が好きです。", false],
+      ],
+      [["三", false]],
+    ]);
+  });
+
   it("skips a segment her voice never plays, and never goes back to it", async () => {
     const { emit, card } = await inCall();
     emit(reply(1), ja(0, "一"), ja(1, "二"), ja(2, "三"), playing(1, 0));
@@ -825,6 +859,45 @@ describe("LiveConversation: a call that is over", () => {
       expect(voice.played, what).toHaveLength(played);
       expect(tones.calls, what).toHaveLength(heard);
     }
+  });
+});
+
+describe("LiveConversation: Japanese practice", () => {
+  it("turns the microphone off at a practice pause, and going on as it is turned back on", async () => {
+    const { live, attempts } = await conversation();
+    const call = await connected(live, attempts);
+    const { handlers } = attempts[0];
+    handlers.onEvent({ type: "user", text: "猫を好きです", reply: 1 });
+    handlers.onEvent({ type: "practice-pause", reply: 1, after: 2 });
+
+    expect(live.snapshot()).toMatchObject({ micMuted: true, practicing: true });
+    expect(call.micEnabled).toEqual([false]);
+
+    live.toggleMic();
+
+    expect(live.snapshot()).toMatchObject({ micMuted: false, practicing: false });
+    expect(call.micEnabled).toEqual([false, true]);
+    expect(call.continued).toBe(1);
+  });
+
+  it("does not go on from a pause when the microphone is merely turned off and on", async () => {
+    const { live, attempts } = await conversation();
+    const call = await connected(live, attempts);
+
+    live.toggleMic();
+    live.toggleMic();
+
+    expect(call.continued).toBe(0);
+  });
+
+  it("leaves the pause behind once the next turn opens", async () => {
+    const { live, attempts } = await conversation();
+    await connected(live, attempts);
+    const { handlers } = attempts[0];
+    handlers.onEvent({ type: "practice-pause", reply: 1, after: 2 });
+    handlers.onEvent({ type: "user", text: "次", reply: 2 });
+
+    expect(live.snapshot().practicing).toBe(false);
   });
 });
 
@@ -2349,7 +2422,7 @@ describe("LiveConversation: the stand", () => {
   });
 
   it("keeps her mouth shut from the first call when text only was on already", async () => {
-    const saved: CallPreferences = { micId: "", quality: "standard", muted: true, phoneTexture: false };
+    const saved: CallPreferences = { micId: "", quality: "standard", muted: true, phoneTexture: false, practice: false };
     const { live, attempts } = await conversation({
       ports: { preferences: { load: () => saved, save: (change) => ({ ...saved, ...change }) } },
     });
@@ -2404,5 +2477,25 @@ describe("LiveConversation: the stand", () => {
 
     await connected(live, attempts);
     expect(live.snapshot().stand).toEqual(CALM);
+  });
+});
+
+
+describe("LiveConversation: unsolicited station messages", () => {
+  it("loads an incoming message without inventing a user turn", async () => {
+    const listMessages = vi.fn<Ports["listMessages"]>().mockResolvedValueOnce([]).mockResolvedValueOnce([message(1, "character", "こんにちは")]);
+    const { live } = await conversation({ ports: { listMessages } });
+    await live.refreshMessages();
+    expect(live.snapshot().entries).toHaveLength(1);
+    live.dispose();
+  });
+  it("does not reload while the producer is composing", async () => {
+    const listMessages = vi.fn<Ports["listMessages"]>().mockResolvedValue([]);
+    const { live } = await conversation({ ports: { listMessages } });
+    live.setDraft("まだ書いています");
+    await live.refreshMessages();
+    expect(listMessages).toHaveBeenCalledTimes(1);
+    expect(live.snapshot().draft).toBe("まだ書いています");
+    live.dispose();
   });
 });

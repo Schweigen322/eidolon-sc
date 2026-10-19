@@ -20,6 +20,8 @@ import sqlite3
 from pathlib import Path
 
 USER_DATA = [
+    ("proactive_attempts", "user_id = ?"),
+    ("proactive_settings", "user_id = ?"),
     ("memory_vectors", "user_id = ?"),
     ("memories", "user_id = ?"),
     ("photos", "conversation_id IN (SELECT id FROM conversations WHERE user_id = ?)"),

@@ -13,6 +13,7 @@ import {
   logoutEverywhere,
   redirectFor,
   sendTurn,
+  saveProactiveSettings,
   type TurnEvent,
 } from "@/lib/api";
 import { keepOwnKey, localOwnKeys } from "@/lib/localOwnKeys";
@@ -361,4 +362,17 @@ describe("signing out and deleting the account", () => {
 
     expect(localOwnKeys("u1")).toEqual({ tts: { api_key: "fish-my-own-key-aaaa" } });
   });
+});
+
+
+it("saves proactive preferences as JSON so the backend can validate them", async () => {
+  const value = { enabled: true, characters: ["mano"], interval_hours: 6, daily_limit: 2, quiet_start: "23:00", quiet_end: "08:00", timezone: "Asia/Tokyo" };
+  const fetcher = vi.fn<typeof fetch>(async () => Response.json(value));
+  vi.stubGlobal("fetch", fetcher);
+  expect(await saveProactiveSettings(value)).toEqual(value);
+  const [path, init] = fetcher.mock.calls[0];
+  expect(path).toBe("/api/proactive");
+  expect(new Headers(init?.headers).get("content-type")).toBe("application/json");
+  expect(init?.method).toBe("PUT");
+  expect(JSON.parse(String(init?.body))).toEqual(value);
 });

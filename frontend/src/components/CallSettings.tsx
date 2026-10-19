@@ -141,6 +141,18 @@ export function CallSettings() {
             onCheckedChange={(phoneTexture) => update({ phoneTexture })}
           />
         </Field>
+
+        <Field orientation="horizontal">
+          <FieldContent>
+            <FieldLabel htmlFor={`${id}-practice`}>{t.practice}</FieldLabel>
+            <FieldDescription>{t.practiceHint}</FieldDescription>
+          </FieldContent>
+          <Switch
+            id={`${id}-practice`}
+            checked={preferences.practice}
+            onCheckedChange={(practice) => update({ practice })}
+          />
+        </Field>
       </FieldGroup>
     </SettingsSection>
   );

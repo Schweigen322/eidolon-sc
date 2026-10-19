@@ -96,6 +96,7 @@ from typing import Literal, ParamSpec, TypeVar
 
 from eidolon.affinity import (
     FED_UP_TURNS,
+    NO_EFFECT,
     Affinities,
     Change,
     EndsFor,
@@ -115,12 +116,16 @@ from eidolon.gift_catalog import Gift
 from eidolon.judge import JudgeError
 from eidolon.llm import ChatMessage, Reasoning, Tool, ToolCall, TurnLLMs
 from eidolon.memory import Memories
+from eidolon.name_recognition import misheard_address, name_recognition_prompt
+from eidolon.relationship import RELATIONSHIP_GUIDANCE
 from eidolon.own_keys import OwnKeyFailed
 from eidolon.photos import NOT_RECEIVED, Eligibility, Photos, photo_turn
 from eidolon.producer import effective_timezone, local_date, now_prompt, producer_prompt
 from eidolon.reply_format import (
+    PRACTICE_INSTRUCTIONS,
     format_instructions,
     PhotoTagged,
+    PracticePause,
     ReplyParser,
     Segment,
     SegmentComplete,
@@ -259,6 +264,7 @@ TurnEvent = (
     | SegmentDelta
     | SpeechDelta
     | SegmentComplete
+    | PracticePause
     | CallTurnRecorded
     | TurnJudged
     | PhotosUsedUp
@@ -269,7 +275,7 @@ TurnEvent = (
 """A turn's events: `user`, then `photo` if she sends one, any `delta`s, then
 `photos-used-up` if the user's photos are, and `done`, or `error`. `shown(event)` is the
 event as it goes out to the browser, except `SpeechDelta`, `SegmentComplete`,
-`CallTurnRecorded` and `TurnJudged`, which do not."""
+`PracticePause`, `CallTurnRecorded` and `TurnJudged`, which do not."""
 
 
 def shown(event: TurnEvent) -> dict:
@@ -354,11 +360,18 @@ class _Photo:
     recorded: bool = False
 
 
-def latest_turns(messages: list[Message], turns: int | None) -> list[Message]:
-    """The messages from the `turns`th last user message on (from the first if None), so
-    what the chat model reads always opens with the user."""
+def latest_turns(
+    messages: list[Message], turns: int | None, *, include_leading: bool = False
+) -> list[Message]:
+    """Messages from the `turns`th last user message on (all user turns if None).
+
+    With `include_leading`, retain an unsolicited character opener while the first
+    user turn is still in context, including before the user has replied at all.
+    """
     starts = [i for i, m in enumerate(messages) if m.role == "user"]
     kept = starts if turns is None else starts[-turns:]
+    if include_leading and (not starts or kept and kept[0] == starts[0]):
+        return messages
     return messages[kept[0]:] if kept else []
 
 
@@ -368,9 +381,9 @@ def chat_history(messages: list[Message], turns: int | None) -> list[Message]:
     time, so what it reads opens the same way from turn to turn in between."""
     total = sum(m.role == "user" for m in messages)
     if turns is None or total <= turns:
-        return latest_turns(messages, None)
+        return latest_turns(messages, None, include_leading=True)
     step = max(1, turns // 2)
-    return latest_turns(messages, total - step * ((total - turns) // step))
+    return latest_turns(messages, total - step * ((total - turns) // step), include_leading=True)
 
 
 RESPOND_TO_GIFTS = (
@@ -467,13 +480,15 @@ class ConversationEngine:
         in_call: InCall | None = None,
         voiced_by: FishAudioModel | None = None,
         own_image: ImageSettings | None = None,
+        practice: bool = False,
     ) -> AsyncIterator[TurnEvent]:
         """Take one turn on `llms`, `in_call` if it is taken in one, its reply voiced with
         `voiced_by` (None for a text turn's), which has her write delivery cues as it reads
         them, her photo on the user's `own_image` generation if it brings it. `device_timezone`
         is the time zone the user's device reports, used unless the producer profile sets
         one. Once `stop` is set, the turn goes no further and is recorded with the segments
-        complete by then."""
+        complete by then. With `practice` (a call's「日语练习」), she corrects the user's
+        Japanese in her own voice and may write a practice pause (`PracticePause`)."""
         text = text.strip()
         yield UserSaid(text)
         if not text or len(text) > MAX_INPUT_LENGTH:
@@ -482,7 +497,8 @@ class ConversationEngine:
         photo = _Photo(own_image)
         try:
             async for event in self._reply(
-                conversation, text, llms, device_timezone, stop, in_call, voiced_by, photo
+                conversation, text, llms, device_timezone, stop, in_call, voiced_by, photo,
+                practice,
             ):
                 yield event
         except OwnKeyFailed as e:  # theirs to fix, so they are told what went wrong
@@ -506,6 +522,7 @@ class ConversationEngine:
         in_call: InCall | None,
         voiced_by: FishAudioModel | None,
         photo: _Photo,
+        practice: bool = False,
     ) -> AsyncIterator[TurnEvent]:
         if self._store.ended(conversation.id) is not None:
             yield TurnRejected(ENDED)
@@ -517,7 +534,7 @@ class ConversationEngine:
         said_at = timestamp()
         messages = [entry for entry in record if isinstance(entry, Message)]
         turns = self._history_turns()
-        history = latest_turns(messages, turns)  # what all but the chat model read
+        history = latest_turns(messages, turns, include_leading=True)
         affinity = self._affinity(conversation)
         judging = affinity is not None and not affinity.cooling
         eligibility = self._photo_eligibility(conversation, character, photo.own)
@@ -548,6 +565,10 @@ class ConversationEngine:
             if judged_apart is not None and not judged_apart.done():
                 judged_apart.cancel()
         now = self._clock()
+        # A bare confirmed STT variant is a call for her attention, never an insult.
+        # Do this before both emotional prompting and persisted affinity/parting decisions.
+        if judged is not None and misheard_address(character, text):
+            judged = replace(judged, level=NO_EFFECT, out_of_line=False, manipulation=False)
         cools = self._cools(conversation, judged)
         if in_call is not None:
             out_of_line_before, hurt_before = in_call.out_of_line, in_call.hurts
@@ -576,13 +597,17 @@ class ConversationEngine:
             photo_turn(asked_photo, affinity and affinity.tier, eligibility)
             if eligibility is not None else None
         )
+        about_producer = producer_prompt(profile)
+        if producer_context := self._store.producer_context(conversation.user_id, character.id):
+            about_producer += "\n\n" + producer_context
         prompt = self._prompt(
-            character, world_prompt, producer_prompt(profile),
+            character, world_prompt, about_producer,
             chat_history(messages, turns), narrations(record, self._gift_catalog),
             now_prompt(
                 profile, now, timezone, in_call=in_call is not None, affinity_lines=affinity_lines
             ),
             retrieved, text, voiced_by, photo_asked and photo_asked.prompt,
+            practice=practice,
         )
 
         # Offered on every turn, so that what goes before the history (the tools, with
@@ -770,9 +795,12 @@ class ConversationEngine:
         text: str,
         voiced_by: FishAudioModel | None,
         about_photo: str | None,
+        practice: bool = False,
     ) -> list[ChatMessage]:
         # What every user's turns with her that day open with, apart, for a service to cache.
-        shared = [character.sheet]
+        shared = [character.sheet, RELATIONSHIP_GUIDANCE]
+        if guidance := name_recognition_prompt(character):
+            shared.append(guidance)
         if world_prompt:
             shared.append(world_prompt)
         shared.append(format_instructions(voiced_by))
@@ -801,6 +829,8 @@ class ConversationEngine:
             context.append(retrieved.memories_prompt)
         if retrieved.prompt:
             context.append(retrieved.prompt)
+        if practice:  # per turn, after the history, so the shared opening stays cached
+            context.append(PRACTICE_INSTRUCTIONS)
         prompt.append(ChatMessage("system", "\n\n".join(context)))
         prompt.append(ChatMessage("user", f"{narration.get(None, '')}{text}"))
         return prompt

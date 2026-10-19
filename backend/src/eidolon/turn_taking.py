@@ -149,6 +149,16 @@ class TurnTaking:
         self._complete = False  # it has a complete segment
 
     @property
+    def voicing(self) -> bool:
+        """Whether the reply in progress is voiced."""
+        return self._voicing
+
+    @property
+    def text_only(self) -> bool:
+        """Whether replies from now on are text only (「只看文字」)."""
+        return self._text_only
+
+    @property
     def ending(self) -> bool:
         """Whether the call is ending, so that nothing more is taken up."""
         return self._ending

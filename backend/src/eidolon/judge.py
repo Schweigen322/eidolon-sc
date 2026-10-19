@@ -20,6 +20,8 @@ from eidolon.billing import bill
 from eidolon.characters import Character
 from eidolon.config import CloudflareJudgeSettings, EmotionSettings, JudgeSettings
 from eidolon.store import Message
+from eidolon.name_recognition import name_recognition_prompt
+from eidolon.relationship import RELATIONSHIP_GUIDANCE
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +50,11 @@ def turn_state(character: Character, history: Sequence[Message], text: str) -> d
             recent.append(f"制作人：{message.text}")
         else:
             recent.append(f"{character.name}：{message.without_cues().ja}")
-    return {"角色": character.name, "上文": recent or "（对话刚开始）", SAID: text}
+    state = {"角色": character.name, "上文": recent or "（对话刚开始）", SAID: text}
+    state["关系沟通说明"] = RELATIONSHIP_GUIDANCE
+    if guidance := name_recognition_prompt(character):
+        state["称呼识别说明"] = guidance
+    return state
 
 
 @dataclass(frozen=True)

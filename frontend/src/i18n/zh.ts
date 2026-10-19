@@ -20,6 +20,31 @@ const reasoningEffortProblems = {
 };
 
 export const zh = {
+  proactive: {
+    title: "主动消息",
+    description: "让选定的偶像偶尔主动找你聊天。消息留在站内，不发送手机通知。",
+    enabled: "允许主动消息",
+    cost: "使用当前部署的聊天模型，可能产生费用。仅向已有对话且未结束的角色发送；安静时段和通话中不发送，刚聊过的15分钟内也不打扰。",
+    characters: "谁可以主动联系你",
+    interval: "两条主动消息至少间隔（小时）",
+    intervalHint: "所有角色共用此间隔，2–72小时。保存后重新等待这个间隔，不会立刻发送。",
+    limit: "每天最多尝试生成几条",
+    limitHint: "所有角色合计1–5次，失败也计入，避免重复调用。默认每天2次。",
+    quiet: "安静时段",
+    quietStart: "安静时段开始",
+    quietEnd: "安静时段结束",
+    quietHint: "可以跨过午夜；开始和结束相同表示没有安静时段。",
+    timezone: "时区",
+    timezoneHint: "例如 Asia/Tokyo。安静时段和每日次数都按此时区计算。",
+    noReply: "同一位偶像发来消息后，你没有回复，她就不会继续催。打开对话会标记已读；已读不等于回复。",
+    save: "保存主动消息设置",
+    saved: "已保存",
+    loading: "正在读取主动消息设置…",
+    retry: "重新读取",
+    selectRequired: "开启前请至少选择一位角色。",
+    unread: "有未读的主动消息",
+    unreadShort: "新消息",
+  },
   app: {
     name: "Eidolon-SC",
     description: "和 283 事务所的偶像说说话",
@@ -278,6 +303,15 @@ export const zh = {
     remaining: (clock: string) => `还剩 ${clock}`,
     speakFreely: "直接说话就好",
     repliesInText: "她会用文字回复",
+    practicePaused: "练习中 · 读好了就打开麦克风，她会接着说",
+    /** 日语练习时通话层右上角的字幕开关：除了她的纠正，字幕默认藏起来练听力。 */
+    subtitles: "字幕",
+    showLine: "点一下显示这句字幕",
+    /** 台词卡上的翻页：她的一条回复是一页。 */
+    pagePrevious: "上一段",
+    pageNext: "下一段",
+    page: (n: number, of: number) => `第 ${n} / ${of} 段`,
+    backToLatest: "回到最新",
     hearing: (text: string) => `你：${text}…`,
     micMute: "麦克风静音",
     micUnmute: "取消麦克风静音",
@@ -626,6 +660,8 @@ export const zh = {
       qualities: { low: "普通", standard: "清晰", high: "高保真" },
       phoneTexture: "电话质感",
       phoneTextureHint: "让角色的声音像隔着电话听筒。下次接通时生效；开启后，不同通话音质之间的差别会变小。",
+      practice: "日语练习",
+      practiceHint: "你说的日语有不自然的地方时，她会用自己的方式纠正，并说出改好的句子，然后停下、关掉麦克风让你练习；重新打开麦克风她就接着说。下次接通时生效。",
     },
     ownKeys: {
       // 外面两句和 ⓘ 里的详细说明，措辞跟隐私说明逐句对齐过（PR #62），改措辞要同步隐私说明。
