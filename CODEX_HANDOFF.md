@@ -141,3 +141,16 @@ npm.cmd run build
 ## 建议的首个 Codex 任务
 
 阅读 AGENTS.md、本文与后端索引，审查现有开发者工具和角色关系判断的实现，先给出可复现问题、对应文件及最小修改建议。基于用户选择处理具体问题；保留已上传的角色设定，避免把所有未来需求一次性改写进系统。
+
+## 最近工作
+
+### 2026-10-20：补记此前 Codex 工作，开始主动消息整合前保存现场
+
+- 本节记录晚于上文的历史基准；当前本地 main 已有 Claude 的 `2bf4bf0e`、`583e3d4d`、`427e5070`，其中包含双方此前成果。后续行为以实际源码、提交和 `CLAUDE_HANDOFF.md` 为准。
+- 提示词：修正 `backend/src/eidolon/affinity_judge.py` 的越界描述矛盾；为羽那、はるき、霧子、恋鐘及摩美々、にちか、千雪、結華、凛世补充具体接话示例，保留个性、已有关系和年龄边界；霧子省略号未统一改写。文件为对应 `characters/sheets/*.md`。Claude 后续二创刻画和好感误罚调整已包含在上述提交中，不将其误记为 Codex 独立完成。
+- 用户背景：`store.py`、`engine.py`、`tests/test_producer_context.py` 支持每用户共享及角色专属背景，每轮注入；实际私人设定仅存本机数据库，未提交到源码。加入地道日语练习与先纠错再正常回复的偏好；排名未导入。Claude 后续新增的通话练习暂停、字幕隐藏等以其交接为准。
+- 主动消息：`proactive.py`、`app.py`、`assembly.py`、`database.py`、`store.py`、`engine.py` 及 `tests/test_proactive.py`，前端 `ProactiveSettings.tsx`、设置入口、列表、轮询、API 和相关测试，实现默认关闭、选角色、固定间隔、每日尝试上限、安静时段、时区、未回复不追发、活跃避让及发送前复核。说明见 `docs/proactive-messages.zh.md`。当时后端相关组 41 项通过（另排除一项原有 developer_data 直接连接数据库纪律问题），前端相关组 215 项通过；完成桌面/移动构建版 Playwright 验收并清理临时验收脚本。
+- 名字容错：`name_recognition.py`、`judge.py`、`engine.py`、`hot_words.py`、`tests/test_name_recognition.py`、`tests/test_affinity_turns.py` 及 `docs/name-recognition.zh.md`，覆盖晴樹/晴树、花、桐子、小金等已确认变体。纯称呼评分保护与上下文提示分开，原话保留，未整体放宽其他内容判断；补充名字读音热词。该次相关离线测试 41 项通过，ruff/pyright 通过。
+- 以上代码当时均已按授权构建部署并核对健康及数据数量；部署前 SQLite 备份保存在原数据卷的 `/data/profile-import-backups/`、`/data/feature-backups/`。曾按用户要求用はるき执行一次真实主动消息测试，已成功入库；未进行付费批量评测。历史测试结果不代表本轮新代码已验证。40 轮通话上限未改，10 分钟配置是否取消仍需实际核对。
+- 语音无声报告已由用户取消排查，未就此修代码。游戏剧情工作原理和二创学习方案仅作解释，没有因此导入新剧情或实现二创检索库。
+- 本轮动手前仍有 `.gitignore` 的忽略项和 `apply-changes.cmd`、`auto-apply-watcher.cmd` 未提交；按用户“先检查并保存”要求，已将完整差异及两个文件复制到本机临时目录 `eidolon-before-proactive-20261020-073101`，原文件原样保留，不将临时脚本提交。本次只补记交接，未变更应用代码或重启；下一步整合自然搭话与固定间隔，保留一套调度器，不整体合并上游。
